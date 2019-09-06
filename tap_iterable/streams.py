@@ -1,7 +1,6 @@
-
-# 
+#
 # Module dependencies.
-# 
+#
 
 import os
 import json
@@ -9,6 +8,7 @@ import datetime
 import pytz
 import singer
 import time
+import tempfile
 from singer import metadata
 from singer import utils
 from singer.metrics import Point
@@ -94,9 +94,9 @@ class Stream():
 
 
     def load_metadata(self):
-        return metadata.get_standard_metadata(schema=self.load_schema(), 
-                                              key_properties=self.key_properties, 
-                                              valid_replication_keys=[self.replication_key], 
+        return metadata.get_standard_metadata(schema=self.load_schema(),
+                                              key_properties=self.key_properties,
+                                              valid_replication_keys=[self.replication_key],
                                               replication_method=self.replication_method)
 
 
@@ -124,15 +124,25 @@ class Stream():
         fns = get_generator(self.data_type_name, bookmark)
         for fn in fns:
             res = fn()
-            for item in res.iter_lines():
-                if item:
-                    item = json.loads(item.decode('utf-8'))
-                    try:
-                        item["transactionalData"] = json.loads(item["transactionalData"])
-                    except KeyError:
-                        pass
-                    self.update_session_bookmark(item[self.replication_key])
-                    yield (self.stream, item)
+            count = 0
+            start_time = time.time()
+            with tempfile.NamedTemporaryFile() as tf:
+                for item in res.iter_lines():
+                    if item:
+                        tf.write(item)
+                        count += 1
+                        tf.write(b'\n')
+                logger.info('wrote {} records to temp file in {} seconds'.format(count, int(time.time() - start_time)))
+                with open(tf.name, 'r', encoding='utf-8') as tf_reader:
+                    for line in tf_reader:
+                        rec = json.loads(line[:-1])
+                        try:
+                            rec["transactionalData"] = json.loads(rec["transactionalData"])
+                        except KeyError:
+                            pass
+                        self.update_session_bookmark(rec[self.replication_key])
+                        yield (self.stream, rec)
+
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
 
@@ -293,5 +303,3 @@ STREAMS = {
     "email_unsubscribe": EmailUnsubscribe,
     "users": Users
 }
-
-
