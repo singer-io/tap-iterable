@@ -132,9 +132,11 @@ class Stream():
                         tf.write(item)
                         count += 1
                         tf.write(b'\n')
-                logger.info('wrote {} records to temp file in {} seconds'.format(count, int(time.time() - start_time)))
+                write_time = time.time()
+                logger.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
                 with open(tf.name, 'r', encoding='utf-8') as tf_reader:
                     for line in tf_reader:
+                        # json load line with carriage return removed
                         rec = json.loads(line[:-1])
                         try:
                             rec["transactionalData"] = json.loads(rec["transactionalData"])
@@ -142,6 +144,7 @@ class Stream():
                             pass
                         self.update_session_bookmark(rec[self.replication_key])
                         yield (self.stream, rec)
+                logger.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
