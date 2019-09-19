@@ -193,7 +193,7 @@ class EmailBounce(Stream):
     name = "email_bounce"
     replication_method = "INCREMENTAL"
     replication_key = "createdAt"
-    key_properties = [ "messageId" ]
+    key_properties = []
     data_type_name = "emailBounce"
 
     def sync(self, state):
@@ -203,7 +203,7 @@ class EmailBounce(Stream):
 class EmailClick(Stream):
     name = "email_click"
     replication_method = "INCREMENTAL"
-    key_properties = [ "messageId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "emailClick"
 
@@ -214,7 +214,7 @@ class EmailClick(Stream):
 class EmailComplaint(Stream):
     name = "email_complaint"
     replication_method = "INCREMENTAL"
-    key_properties = [ "messageId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "emailComplaint"
 
@@ -225,7 +225,7 @@ class EmailComplaint(Stream):
 class EmailOpen(Stream):
     name = "email_open"
     replication_method = "INCREMENTAL"
-    key_properties = [ "messageId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "emailOpen"
 
@@ -236,7 +236,7 @@ class EmailOpen(Stream):
 class EmailSend(Stream):
     name = "email_send"
     replication_method = "INCREMENTAL"
-    key_properties = [ "messageId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "emailSend"
 
@@ -247,7 +247,7 @@ class EmailSend(Stream):
 class EmailSendSkip(Stream):
     name = "email_send_skip"
     replication_method = "INCREMENTAL"
-    key_properties = [ "messageId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "emailSendSkip"
 
@@ -269,7 +269,7 @@ class EmailSubscribe(Stream):
 class EmailUnsubscribe(Stream):
     name = "email_unsubscribe"
     replication_method = "INCREMENTAL"
-    key_properties = [ "messageId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "emailUnsubscribe"
 
@@ -280,7 +280,7 @@ class EmailUnsubscribe(Stream):
 class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
-    key_properties = [ "userId" ]
+    key_properties = []
     replication_key = "createdAt"
     data_type_name = "user"
 
