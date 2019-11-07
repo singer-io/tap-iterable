@@ -136,9 +136,9 @@ class Stream():
                 logger.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
                 with open(tf.name, 'r', encoding='utf-8') as tf_reader:
                     for line in tf_reader:
-                        # json load line with carriage return removed, but
-                        # sometimes the last line does not have a carraige
-                        # return, so check
+                        # json load line with line feed removed, but
+                        # sometimes the last line does not end with a line
+                        # feed, so check
                         if line[-1] == '\n':
                             rec = json.loads(line[:-1])
                         else:
