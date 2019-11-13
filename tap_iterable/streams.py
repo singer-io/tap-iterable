@@ -149,7 +149,7 @@ class Stream():
                             pass
                         try:
                             self.update_session_bookmark(rec[self.replication_key])
-                        except KeyError as some_error:
+                        except KeyError:
                             logger.info('stream %s: The record did not have its intended replication key "%s"',
                                         self.stream.tap_stream_id,
                                         self.replication_key)
