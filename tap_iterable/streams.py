@@ -147,13 +147,7 @@ class Stream():
                             rec["transactionalData"] = json.loads(rec["transactionalData"])
                         except KeyError:
                             pass
-                        try:
-                            self.update_session_bookmark(rec[self.replication_key])
-                        except KeyError:
-                            logger.info('stream %s: The record did not have its intended replication key "%s"',
-                                        self.stream.tap_stream_id,
-                                        self.replication_key)
-                            self.update_session_bookmark(request_end_date)
+                        self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
                         yield (self.stream, rec)
                 logger.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
