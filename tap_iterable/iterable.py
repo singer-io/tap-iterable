@@ -163,5 +163,5 @@ class Iterable(object):
       kwargs["startDateTime"] = start_date_time
       kwargs["endDateTime"] = self._get_end_datetime(startDateTime=start_date_time)
       def get_data():
-        return self._get("export/data.json", dataTypeName=data_type_name, **kwargs)
+        return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
       yield get_data

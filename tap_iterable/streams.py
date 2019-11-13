@@ -123,7 +123,7 @@ class Stream():
         bookmark = self.get_bookmark(state)
         fns = get_generator(self.data_type_name, bookmark)
         for fn in fns:
-            res = fn()
+            res, request_end_date = fn()
             count = 0
             start_time = time.time()
             with tempfile.NamedTemporaryFile() as tf:
