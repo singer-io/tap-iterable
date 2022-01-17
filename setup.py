@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="tap-iterable",
-    version="0.0.5",
+    version="0.0.6",
     description="Singer.io tap for extracting Iterable data",
     author="Stitch",
     url="http://github.com/singer-io/tap-iterable",

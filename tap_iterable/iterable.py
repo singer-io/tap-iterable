@@ -12,6 +12,7 @@ import logging
 
 
 logger = logging.getLogger()
+logging.getLogger('backoff').setLevel(logging.CRITICAL)
 
 
 """ Simple wrapper for Iterable. """
