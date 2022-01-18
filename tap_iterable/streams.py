@@ -286,7 +286,7 @@ class EmailUnsubscribe(Stream):
 class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
-    key_properties = []
+    key_properties = ["id"]
     replication_key = "createdAt"
     data_type_name = "user"
 
