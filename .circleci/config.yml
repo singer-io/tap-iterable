@@ -17,3 +17,9 @@ jobs:
           command: |
             source /usr/local/share/virtualenvs/tap-iterable/bin/activate
             make test
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - build:
+          context: circleci-user
