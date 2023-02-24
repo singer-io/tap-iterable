@@ -57,6 +57,7 @@ class Iterable(object):
 
     # Add query params, including `api_key`.
     params = {}
+    headers = { "api_key": self.api_key }
     for key, value in kwargs.items():
       params[key] = value
     uri += "?{params}".format(params=urlencode(params))
