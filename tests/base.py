@@ -270,3 +270,11 @@ class IterableBase(unittest.TestCase):
         boolean result.
         """
         return self.expected_metadata()[stream][self.REPLICATION_METHOD] == self.INCREMENTAL
+
+    def get_bookmark_value(self, state, stream):
+        bookmark = state.get('bookmarks', {})
+        stream_bookmark = bookmark.get(stream)
+        stream_replication_key = self.expected_metadata().get(stream,set()).get('REPLICATION_KEYS')
+        if stream_bookmark:
+            return stream_bookmark.get(stream_replication_key)
+        return None
