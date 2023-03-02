@@ -6,16 +6,16 @@ from datetime import datetime, timedelta
 from singer import utils
 from urllib.parse import urlencode
 import backoff
-import json
 import requests
 import logging
+from tap_iterable.exceptions import IterableRateLimitError
 
 
 logger = logging.getLogger()
 
 
-""" Simple wrapper for Iterable. """
 class Iterable(object):
+  """ Simple wrapper for Iterable. """
 
   def __init__(self, api_key, start_date=None, api_window_in_days=30):
     self.api_key = api_key
@@ -45,15 +45,14 @@ class Iterable(object):
     logger.info("Received 429 -- sleeping for %s seconds",
                 details['wait'])
 
-  #
-  # The actual `get` request.
-  #
 
-  @backoff.on_exception(backoff.expo,
-                        requests.exceptions.HTTPError,
-                        on_backoff=retry_handler,
-                        max_tries=10)
+  @backoff.on_exception(backoff.constant,
+                        IterableRateLimitError,
+                        interval=30,
+                        max_tries=3)
   def _get(self, path, stream=True, **kwargs):
+    """ The actual `get` request.  """
+
     uri = "{uri}{path}".format(uri=self.uri, path=path)
 
     # Add query params, including `api_key`.
@@ -70,19 +69,17 @@ class Iterable(object):
     response.raise_for_status()
     return response
 
-  #
-  # The common `get` request.
-  #
 
   def get(self, path, **kwargs):
+    """" The common `get` request. """
+
     response = self._get(path, **kwargs)
     return response.json()
 
-  #
-  # Get custom user fields, used for generating `users` schema in `discover`.
-  #
 
   def get_user_fields(self):
+    """ Get custom user fields, used for generating `users` schema in `discover`. """
+
     return self.get("users/getFields")
 
   #
