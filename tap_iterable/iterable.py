@@ -14,8 +14,9 @@ import logging
 logger = logging.getLogger()
 
 
-""" Simple wrapper for Iterable. """
+
 class Iterable(object):
+  """ Simple wrapper for Iterable. """
 
   def __init__(self, api_key, start_date=None, api_window_in_days=30):
     self.api_key = api_key
@@ -47,42 +48,39 @@ class Iterable(object):
     logger.info("Received 429 -- sleeping for %s seconds",
                 details['wait'])
 
-  #
-  # The actual `get` request.
-  #
-
   @backoff.on_exception(backoff.expo,
                         requests.exceptions.HTTPError,
                         on_backoff=retry_handler,
                         max_tries=10)
   def _get(self, path, stream=True, **kwargs):
+    """ The actual `get` request.  """
     uri = "{uri}{path}".format(uri=self.uri, path=path)
 
     # Add query params, including `api_key`.
-    params = { "api_key": self.api_key }
+    params = {}
+    headers = {"api_key": self.api_key}
     for key, value in kwargs.items():
       params[key] = value
     uri += "?{params}".format(params=urlencode(params))
-
     logger.info("GET request to {uri}".format(uri=uri))
-    response = requests.get(uri, stream=stream)
+
+    response = requests.get(uri, stream=stream, headers=headers, params=params)
+    logger.info("Response status:%s", response.status_code)
+
     response.raise_for_status()
     return response
 
-  #
-  # The common `get` request.
-  #
 
   def get(self, path, **kwargs):
+    """" The common `get` request. """
     response = self._get(path, **kwargs)
     return response.json()
 
-  #
-  # Get custom user fields, used for generating `users` schema in `discover`.
-  #
 
   def get_user_fields(self):
+    """Get custom user fields, used for generating `users` schema in `discover`."""
     return self.get("users/getFields")
+
 
   #
   # Methods to retrieve data per stream/resource.

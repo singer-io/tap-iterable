@@ -94,10 +94,15 @@ class Stream():
 
 
     def load_metadata(self):
-        return metadata.get_standard_metadata(schema=self.load_schema(),
-                                              key_properties=self.key_properties,
-                                              valid_replication_keys=[self.replication_key],
-                                              replication_method=self.replication_method)
+        stream_metadata = metadata.get_standard_metadata(**{"schema": self.load_schema(),
+                                        "key_properties": self.key_properties,
+                                        "valid_replication_keys": [self.replication_key],
+                                        "replication_method": self.replication_method})
+        stream_metadata = metadata.to_map(stream_metadata)
+        if self.replication_key is not None:
+            stream_metadata = metadata.write(stream_metadata, ("properties", self.replication_key), "inclusion", "automatic")
+        stream_metadata = metadata.to_list(stream_metadata)
+        return stream_metadata
 
 
     # The main sync function.
@@ -287,7 +292,7 @@ class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
     key_properties = []
-    replication_key = "createdAt"
+    replication_key = "profileUpdatedAt"
     data_type_name = "user"
 
     def sync(self, state):
