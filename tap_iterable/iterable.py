@@ -65,7 +65,7 @@ class Iterable(object):
     logger.info("GET request to {uri}".format(uri=uri))
 
     response = requests.get(uri, stream=stream, headers=headers, params=params)
-    logger.info("Request response: %s, response status:%s",response.text, response.status_code)
+    logger.info("Response status:%s", response.status_code)
     response.raise_for_status()
     return response
 

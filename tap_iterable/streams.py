@@ -291,7 +291,7 @@ class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
     key_properties = []
-    replication_key = "createdAt"
+    replication_key = "profileUpdatedAt"
     data_type_name = "user"
 
     def sync(self, state):
