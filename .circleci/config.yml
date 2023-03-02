@@ -25,7 +25,7 @@ jobs:
       #       pip install coverage
       #       pip install nose coverage parameterized
       #       nosetests --with-coverage --cover-erase --cover-package=tap_iterable --cover-html-dir=htmlcov tests/unittests
-            coverage html
+      #       coverage html
       - store_test_results:
           path: test_output/report.xml
       - store_artifacts:
