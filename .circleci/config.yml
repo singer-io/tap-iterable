@@ -8,20 +8,20 @@ jobs:
       - run:
           name: 'Setup virtual env'
           command: |
-            python3 -mvenv /usr/local/share/virtualenvs/tap-appsflyer
-            source /usr/local/share/virtualenvs/tap-appsflyer/bin/activate
+            python3 -mvenv /usr/local/share/virtualenvs/tap-iterable
+            source /usr/local/share/virtualenvs/tap-iterable/bin/activate
             pip install -U 'pip<19.2' 'setuptools<51.0.0'
             pip install .[dev]
             pip install pylint
       - run:
           name: 'pylint'
           command: |
-            source /usr/local/share/virtualenvs/tap-appsflyer/bin/activate
+            source /usr/local/share/virtualenvs/tap-iterable/bin/activate
             pylint tap_iterable -d C,R,W
       # - run:
       #     name: 'Unit Tests'
       #     command: |
-      #       source /usr/local/share/virtualenvs/tap-appsflyer/bin/activate
+      #       source /usr/local/share/virtualenvs/tap-iterable/bin/activate
       #       pip install coverage
       #       pip install nose coverage parameterized
       #       nosetests --with-coverage --cover-erase --cover-package=tap_iterable --cover-html-dir=htmlcov tests/unittests
