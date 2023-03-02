@@ -16,7 +16,7 @@ from dateutil.parser import parse
 from tap_iterable.context import Context
 
 
-logger = singer.get_logger()
+LOGGER = singer.get_logger()
 KEY_PROPERTIES = ['id']
 
 
@@ -138,7 +138,7 @@ class Stream():
                         count += 1
                         tf.write(b'\n')
                 write_time = time.time()
-                logger.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
+                LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
                 with open(tf.name, 'r', encoding='utf-8') as tf_reader:
                     for line in tf_reader:
                         # json load line with line feed removed, but
@@ -154,7 +154,7 @@ class Stream():
                             pass
                         self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
                         yield (self.stream, rec)
-                logger.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
+                LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)

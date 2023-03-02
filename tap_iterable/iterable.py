@@ -11,7 +11,7 @@ import requests
 import logging
 
 
-logger = logging.getLogger()
+LOGGER = logging.getLogger()
 
 
 
@@ -44,7 +44,7 @@ class Iterable(object):
 
 
   def retry_handler(details):
-    logger.info("Received 429 -- sleeping for %s seconds",
+    LOGGER.info("Received 429 -- sleeping for %s seconds",
                 details['wait'])
 
   @backoff.on_exception(backoff.expo,
@@ -61,10 +61,10 @@ class Iterable(object):
     for key, value in kwargs.items():
       params[key] = value
     uri += "?{params}".format(params=urlencode(params))
-    logger.info("GET request to {uri}".format(uri=uri))
+    LOGGER.info("GET request to {uri}".format(uri=uri))
 
     response = requests.get(uri, stream=stream, headers=headers, params=params)
-    logger.info("Response status:%s", response.status_code)
+    LOGGER.info("Response status:%s", response.status_code)
 
     response.raise_for_status()
     return response
