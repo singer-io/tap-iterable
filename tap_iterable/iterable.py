@@ -32,16 +32,15 @@ class Iterable(object):
 
   def _daterange(self, start_date, end_date):
     total_days = (utils.strptime_with_tz(end_date) - utils.strptime_with_tz(start_date)).days
+    remaining_days = int(total_days / self.api_window_in_days)
     if total_days >= self.api_window_in_days:
-      for n in range(int(total_days / self.api_window_in_days)):
-        yield (utils.strptime_with_tz(start_date) + n * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+      for n in range(remaining_days):
+        yield ((utils.strptime_with_tz(start_date) + n * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S"))
+      if int(total_days % self.api_window_in_days) > 0 :
+        start_slot_date = (utils.strptime_with_tz(start_date) + remaining_days * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+        yield (start_slot_date)
     else:
-      yield start_date
-
-
-  def _get_end_datetime(self, startDateTime):
-    endDateTime = utils.strptime_with_tz(startDateTime) + timedelta(self.api_window_in_days)
-    return endDateTime.strftime("%Y-%m-%d %H:%M:%S")
+      yield utils.strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
 
 
   def retry_handler(details):
@@ -159,7 +158,12 @@ class Iterable(object):
     kwargs = {}
     for start_date_time in self._daterange(bookmark, now):
       kwargs["startDateTime"] = start_date_time
-      kwargs["endDateTime"] = self._get_end_datetime(startDateTime=start_date_time)
+      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+      if endDateTime <= now: 
+        kwargs["endDateTime"] = endDateTime
+      else :
+        kwargs["endDateTime"] = now
+
       def get_data():
         return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
       yield get_data
