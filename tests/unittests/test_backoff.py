@@ -6,9 +6,6 @@ import requests
 from parameterized import parameterized
 
 
-
-
-
 class Mockresponse:
     """ Mock response object class."""
 
@@ -41,22 +38,23 @@ class TestBackoff(unittest.TestCase):
     """
 
     @parameterized.expand([
-        [400, IterableBadRequestError, 1],
-        [401, IterableUnauthorizedError, 1],
-        [429, IterableRateLimitError, 5],
-        [503, IterableNotAvailableError, 5],
+        [400, IterableBadRequestError, 1, "A validation exception has occurred."],
+        [401, IterableUnauthorizedError, 1, "Invalid authorization credentials."],
+        [429, IterableRateLimitError, 5, "The API rate limit for your organisation/application pairing has been exceeded."],
+        [503, IterableNotAvailableError, 5, "API service is currently unavailable."],
     ])
     @mock.patch("time.sleep")
     @mock.patch("requests.get")
-    def test_backoff(self, mock_error_code, mock_exception, mock_expected_call_count, mock_sleep, mock_get):
-        mock_get.side_effect = get_response(mock_error_code)
+    def test_backoff(self, mock_error_code, mock_exception, mock_expected_call_count, expected_error_message, mock_get, mock_sleep):
         iterable_object = Iterable("api-key")
+        # mock_get.side_effect = mock_exception("Exception")
+        mock_get.side_effect = [Mockresponse(mock_error_code, {}, True)]*mock_expected_call_count
 
-        # with self.assertRaises(mock_exception) as e:
-        iterable_object.get("dummy-path")
+        with self.assertRaises(mock_exception) as e:
+            iterable_object._get("dummy-path")
 
-        # # Verifying the message formed for the custom exception
-        # self.assertEqual(str(e.exception), expected_error_message)
+        # Verifying the message formed for the custom exception
+        self.assertEqual(str(e.exception), f"HTTP-error-code: {mock_error_code}, Error: {expected_error_message}")
 
         # Verify the call count for each error.
         self.assertEquals(mock_get.call_count, mock_expected_call_count)
