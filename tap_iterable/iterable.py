@@ -153,17 +153,22 @@ class Iterable(object):
         yield value
 
 
-  def get_data_export_generator(self, data_type_name, bookmark=None):
+  def get_start_end_date(self, bookmark):
     now = self._now()
     kwargs = {}
     for start_date_time in self._daterange(bookmark, now):
       kwargs["startDateTime"] = start_date_time
-      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
-      if endDateTime <= now: 
+      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(
+        self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+      if endDateTime <= now:
         kwargs["endDateTime"] = endDateTime
-      else :
+      else:
         kwargs["endDateTime"] = now
+      yield kwargs
 
+
+  def get_data_export_generator(self, data_type_name, bookmark=None):
+    for kwargs in self.get_start_end_date(bookmark):
       def get_data():
         return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
-      yield get_data
+      yield get_data      
