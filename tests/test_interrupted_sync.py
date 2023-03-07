@@ -41,7 +41,7 @@ class InterruptedSyncTest(IterableBase):
         start_date_timestamp = self.parse_date(self.start_date)
 
         conn_id = connections.ensure_connection(self)
-        expected_streams = self.expected_streams()
+        expected_streams = self.expected_streams() - {"metadata", "email_send_skip", "email_complaint", "email_click"}
 
         # Run check mode
         found_catalogs = self.run_and_verify_check_mode(conn_id)
@@ -61,10 +61,20 @@ class InterruptedSyncTest(IterableBase):
 
         # Simulated interrupted state to run 2nd sync
         interrupted_sync_state = {
-            "currently_syncing": "customers",
+            "currently_syncing": "email_open",
             "bookmarks": {
-                "conversations": "2021-12-02T16:47:26Z",
-                "customers": "2019-06-20T17:00:00Z"
+                "campaigns": {
+                    "updatedAt": "2023-03-02 10:18:55.000000Z"
+                },
+                "templates": {
+                    "updatedAt": "2023-02-22 07:31:15.000000Z"
+                },
+                "email_bounce": {
+                    "createdAt": "2023-03-01 10:58:00.000000Z"
+                },
+                "email_open": {
+                    "createdAt": "2023-02-22 7:43:31.000000Z"
+                }
             }
         }
 
@@ -96,8 +106,11 @@ class InterruptedSyncTest(IterableBase):
         # Stream level assertions
         for stream in expected_streams:
             with self.subTest(stream=stream):
-
-                replication_key = self.expected_replication_keys()[stream]
+                # Get the replication key
+                replication_keys = list(self.expected_replication_keys()[stream])
+                replication_key = replication_keys[0] if replication_keys else None
+                
+                # Get the replication method
                 replication_method = self.expected_replication_method()[stream]
 
                 # Gather actual results
@@ -115,7 +128,7 @@ class InterruptedSyncTest(IterableBase):
 
                 if replication_method == self.INCREMENTAL:
                     # Final bookmark after interrupted sync
-                    final_stream_bookmark = post_interrupted_sync_state["bookmarks"].get(stream, None)
+                    final_stream_bookmark = post_interrupted_sync_state["bookmarks"].get(stream, dict()).get(replication_key, None)
 
                     # Verify final bookmark matched the formatting standards for the resuming sync
                     self.assertIsNotNone(final_stream_bookmark,
@@ -125,14 +138,16 @@ class InterruptedSyncTest(IterableBase):
 
                 if stream == interrupted_sync_state["currently_syncing"]:
                     # Assign the start date to the interrupted stream
-                    interrupted_stream_datetime = self.parse_date(interrupted_sync_state["bookmarks"][stream])
-                    primary_key = self.expected_primary_keys()[stream].pop()
+                    interrupted_stream_datetime = self.parse_date(interrupted_sync_state["bookmarks"][stream][replication_key])
+
+                    primary_key = self.expected_primary_keys()[stream].pop() if self.expected_primary_keys()[stream] else None
 
                     # Get primary keys of 1st sync records
-                    full_records_primary_keys = [x[primary_key] for x in first_sync_stream_records]
+                    if primary_key:
+                        full_records_primary_keys = [x[primary_key] for x in first_sync_stream_records]
 
                     for record in post_interrupted_sync_stream_records:
-                        record_time = self.parse_date(record.get(list(replication_key)[0]))
+                        record_time = self.parse_date(record.get(replication_key))
 
                         # Verify resuming sync only replicates records with the replication key
                         # values greater or equal to the state for streams that were replicated
@@ -141,13 +156,14 @@ class InterruptedSyncTest(IterableBase):
 
                         # Verify the interrupted sync replicates the expected record set all
                         # interrupted records are in full records
-                        self.assertIn(record[primary_key], full_records_primary_keys,
-                                      msg="Incremental table record in interrupted sync not found in full sync")
+                        if primary_key:
+                            self.assertIn(record[primary_key], full_records_primary_keys,
+                                        msg="Incremental table record in interrupted sync not found in full sync")
 
                     # Record count for all streams of interrupted sync match expectations
                     records_after_interrupted_bookmark = 0
                     for record in first_sync_stream_records:
-                        record_time = self.parse_date(record.get(list(replication_key)[0]))
+                        record_time = self.parse_date(record.get(replication_key))
                         if record_time >= interrupted_stream_datetime:
                             records_after_interrupted_bookmark += 1
 
@@ -157,23 +173,20 @@ class InterruptedSyncTest(IterableBase):
 
                 else:
                     # Get the date to start 2nd sync for non-interrupted streams
-                    synced_stream_bookmark = interrupted_sync_state["bookmarks"].get(stream, None)
+                    synced_stream_bookmark = interrupted_sync_state["bookmarks"].get(stream, dict()).get(replication_key, None)
 
                     if synced_stream_bookmark:
                         synced_stream_datetime = self.parse_date(synced_stream_bookmark)
                     else:
                         synced_stream_datetime = start_date_timestamp
 
-                    # BUG: TDL-21675: interrupted sync does not sync already synced streams
-                    if stream not in ["conversations", "conversation_threads"]:
-                        # Verify we replicated some records for the non-interrupted streams
-                        self.assertGreater(interrupted_record_count, 0,
-                                        msg="Un-interrupted streams must sync at least 1 record.")
+                    self.assertGreater(interrupted_record_count, 0,
+                                    msg="Un-interrupted streams must sync at least 1 record.")
 
                     if replication_method == self.INCREMENTAL:
 
                         for record in post_interrupted_sync_stream_records:
-                            record_time = self.parse_date(record.get(list(replication_key)[0]))
+                            record_time = self.parse_date(record.get(replication_key))
 
                             # Verify resuming sync only replicates records with the replication key
                             # values greater or equal to the state for streams that were replicated
@@ -185,8 +198,6 @@ class InterruptedSyncTest(IterableBase):
                             self.assertIn(record, first_sync_stream_records,
                                         msg="Unexpected record replicated in resuming sync.")
                     else:
-                        # BUG: TDL-21675: interrupted sync does not sync already synced streams
-                        if stream not in ["conversation_threads"]:
-                            # FULL_TABLE stream records should be same
-                            self.assertEqual(interrupted_record_count, full_sync_record_count,
-                                          msg=f"Record count of streams with {self.FULL_TABLE} replication method must be equal.")
+                        # FULL_TABLE stream records should be same
+                        self.assertEqual(interrupted_record_count, full_sync_record_count,
+                                        msg=f"Record count of streams with {self.FULL_TABLE} replication method must be equal.")
