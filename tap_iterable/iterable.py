@@ -1,3 +1,4 @@
+# pylint: disable=E1136, E0213
 #
 # Module dependencies.
 #
