@@ -142,12 +142,19 @@ class Iterable(object):
       "InApp",
       "SMS"
     ]
+    # bookmark value `updatedAt` is getting round off to next second
+    # while putting into the STATE and which is causing 0 records fetched
+    # with existing bookmark value in STATE 
+    bookmark_val = utils.strptime_with_tz(bookmark)- timedelta(seconds=1)
+    bookmark = utils.strftime(bookmark_val)
     for template_type in template_types:
       for medium in message_mediums:
         for kwargs in self.get_start_end_date(bookmark):
           res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
           for t in res["templates"]:
-            yield t
+            rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(t["updatedAt"]))
+            if rec_date_time >= bookmark_val:
+              yield t
 
 
   def metadata(self, column_name=None, bookmark=None):
