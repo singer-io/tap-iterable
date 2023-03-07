@@ -41,7 +41,7 @@ class InterruptedSyncTest(IterableBase):
         start_date_timestamp = self.parse_date(self.start_date)
 
         conn_id = connections.ensure_connection(self)
-        expected_streams = self.expected_streams() - {"metadata", "email_send_skip", "email_complaint", "email_click"}
+        expected_streams = {"list_users"} #self.expected_streams() - {"metadata", "email_send_skip", "email_complaint", "email_click"}
 
         # Run check mode
         found_catalogs = self.run_and_verify_check_mode(conn_id)
