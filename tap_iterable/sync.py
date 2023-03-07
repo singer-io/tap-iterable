@@ -7,6 +7,7 @@ import singer
 import singer.metrics as metrics
 from singer import metadata
 from singer import Transformer
+from tap_iterable.streams import STREAMS
 
 LOGGER = singer.get_logger()
 
