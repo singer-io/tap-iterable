@@ -2,10 +2,7 @@
 # Module dependencies.
 #
 
-import os
-import json
 import singer
-import sys
 from tap_iterable.streams import STREAMS
 
 

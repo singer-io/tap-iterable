@@ -9,6 +9,7 @@ import backoff
 import json
 import requests
 import logging
+import tap_iterable.helper as helper
 
 
 LOGGER = logging.getLogger()
@@ -107,9 +108,12 @@ class Iterable(object):
 
 
   def campaigns(self, column_name=None, bookmark=None):
+    bookmark = utils.strptime_with_tz(bookmark)
     res = self.get("campaigns")
     for c in res["campaigns"]:
-      yield c
+      rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
+      if rec_date_time > bookmark:
+        yield c
 
 
   def channels(self, column_name, bookmark):
@@ -139,9 +143,10 @@ class Iterable(object):
     ]
     for template_type in template_types:
       for medium in message_mediums:
-        res = self.get("templates", templateTypes=template_type, messageMedium=medium)
-        for t in res["templates"]:
-          yield t
+        for kwargs in self.get_start_end_date(bookmark):
+          res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
+          for t in res["templates"]:
+            yield t
 
 
   def metadata(self, column_name=None, bookmark=None):

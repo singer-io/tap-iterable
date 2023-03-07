@@ -10,7 +10,7 @@ import singer
 from singer import metadata
 from tap_iterable.iterable import Iterable
 from tap_iterable.discover import discover_streams
-from tap_iterable.sync import sync_stream, sync
+from tap_iterable.sync import sync
 from tap_iterable.context import Context
 
 

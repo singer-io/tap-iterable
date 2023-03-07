@@ -76,14 +76,14 @@ class Stream():
         # Assume value is epoch time
         value_in_date_time = epoch_to_datetime_string(value)
         if value_in_date_time is None or self.is_bookmark_old(state, value_in_date_time, name):
-            singer.write_bookmark(state, name, self.replication_key, value_in_date_time)
+            singer.write_bookmark(state, name, self.replication_key, utils.strftime(utils.strptime_to_utc(value_in_date_time)))
 
 
     def is_bookmark_old(self, state, value, name=None):
         # Assume value is epoch time.
         value_in_date_time = epoch_to_datetime_string(value)
         current_bookmark = self.get_bookmark(state, name)
-        return utils.strptime_with_tz(value_in_date_time) > utils.strptime_with_tz(current_bookmark)
+        return utils.strptime_with_tz(value_in_date_time) >= utils.strptime_with_tz(current_bookmark)
 
 
     def load_schema(self):
@@ -137,6 +137,7 @@ class Stream():
                         tf.write(item)
                         count += 1
                         tf.write(b'\n')
+                tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
                 with open(tf.name, 'r', encoding='utf-8') as tf_reader:
@@ -156,6 +157,8 @@ class Stream():
                         yield (self.stream, rec)
                 LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
+            if not self.session_bookmark and bookmark :
+                self.session_bookmark = bookmark 
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
 
