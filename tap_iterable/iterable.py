@@ -12,10 +12,6 @@ import requests
 import logging
 import tap_iterable.helper as helper
 
-# from debugpy import listen, wait_for_client
-# listen(8000)
-# wait_for_client()
-
 LOGGER = logging.getLogger()
 
 
