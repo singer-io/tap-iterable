@@ -116,6 +116,8 @@ class Stream():
             for item in res:
                 self.update_session_bookmark(item[self.replication_key])
                 yield (self.stream, item)
+            if not self.session_bookmark and bookmark:
+                self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)
 
         else:
