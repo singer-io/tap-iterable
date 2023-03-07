@@ -140,6 +140,7 @@ class Stream():
                         tf.write(item)
                         count += 1
                         tf.write(b'\n')
+                # Fix for TDL-22208
                 tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
