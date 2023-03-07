@@ -112,7 +112,7 @@ class Iterable(object):
     res = self.get("campaigns")
     for c in res["campaigns"]:
       rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
-      if rec_date_time > bookmark:
+      if rec_date_time >= bookmark:
         yield c
 
 
