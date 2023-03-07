@@ -14,6 +14,7 @@ from singer import utils
 from singer.metrics import Point
 from dateutil.parser import parse
 from tap_iterable.context import Context
+from singer.utils import strftime, strptime_to_utc
 
 
 logger = singer.get_logger()
@@ -31,7 +32,6 @@ def epoch_to_datetime_string(milliseconds):
     except TypeError:
         # If fails, it means format already datetime string.
         datetime_string = milliseconds
-        pass
     return datetime_string
 
 
@@ -76,14 +76,14 @@ class Stream():
         # Assume value is epoch time
         value_in_date_time = epoch_to_datetime_string(value)
         if value_in_date_time is None or self.is_bookmark_old(state, value_in_date_time, name):
-            singer.write_bookmark(state, name, self.replication_key, value_in_date_time)
+            singer.write_bookmark(state, name, self.replication_key, strftime(strptime_to_utc(value_in_date_time)))
 
 
     def is_bookmark_old(self, state, value, name=None):
         # Assume value is epoch time.
         value_in_date_time = epoch_to_datetime_string(value)
         current_bookmark = self.get_bookmark(state, name)
-        return utils.strptime_with_tz(value_in_date_time) > utils.strptime_with_tz(current_bookmark)
+        return utils.strptime_with_tz(value_in_date_time) >= utils.strptime_with_tz(current_bookmark)
 
 
     def load_schema(self):
@@ -115,6 +115,8 @@ class Stream():
             for item in res:
                 self.update_session_bookmark(item[self.replication_key])
                 yield (self.stream, item)
+            if not self.session_bookmark and bookmark:
+                self.session_bookmark= bookmark 
             self.update_bookmark(state, self.session_bookmark)
 
         else:
@@ -136,6 +138,7 @@ class Stream():
                         tf.write(item)
                         count += 1
                         tf.write(b'\n')
+                tf.seek(0)
                 write_time = time.time()
                 logger.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
                 with open(tf.name, 'r', encoding='utf-8') as tf_reader:
@@ -151,10 +154,12 @@ class Stream():
                             rec["transactionalData"] = json.loads(rec["transactionalData"])
                         except KeyError:
                             pass
-                        self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
+                        self.update_session_bookmark(rec.get(self.replication_key, request_end_date))                        
                         yield (self.stream, rec)
                 logger.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
+            if not self.session_bookmark and bookmark :
+                self.session_bookmark = bookmark 
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
 

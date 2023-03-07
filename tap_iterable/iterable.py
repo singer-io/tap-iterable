@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import backoff
 import requests
 import logging
-from tap_iterable.exceptions import IterableRateLimitError
+import tap_iterable.helper as helper
 
 
 logger = logging.getLogger()
@@ -46,10 +46,10 @@ class Iterable(object):
                 details['wait'])
 
 
-  @backoff.on_exception(backoff.constant,
-                        IterableRateLimitError,
-                        interval=30,
-                        max_tries=3)
+  @backoff.on_exception(backoff.expo,
+                        requests.exceptions.HTTPError,
+                        on_backoff=retry_handler,
+                        max_tries=10)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
 
@@ -108,9 +108,12 @@ class Iterable(object):
 
 
   def campaigns(self, column_name=None, bookmark=None):
+    bookmark = utils.strptime_with_tz(bookmark)
     res = self.get("campaigns")
     for c in res["campaigns"]:
-      yield c
+      rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
+      if rec_date_time > bookmark:
+        yield c
 
 
   def channels(self, column_name, bookmark):
@@ -140,9 +143,24 @@ class Iterable(object):
     ]
     for template_type in template_types:
       for medium in message_mediums:
-        res = self.get("templates", templateTypes=template_type, messageMedium=medium)
-        for t in res["templates"]:
-          yield t
+        for kwargs in self.get_start_end_date(bookmark):
+          res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
+          for t in res["templates"]:
+            yield t
+
+
+  def get_start_end_date(self, bookmark):
+    now = self._now()
+    kwargs = {}
+    for start_date_time in self._daterange(bookmark, now):
+      kwargs["startDateTime"] = start_date_time
+      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(
+        self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+      if endDateTime <= now:
+        kwargs["endDateTime"] = endDateTime
+      else:
+        kwargs["endDateTime"] = now
+      yield kwargs
 
 
   def metadata(self, column_name=None, bookmark=None):
@@ -155,16 +173,7 @@ class Iterable(object):
 
 
   def get_data_export_generator(self, data_type_name, bookmark=None):
-    now = self._now()
-    kwargs = {}
-    for start_date_time in self._daterange(bookmark, now):
-      kwargs["startDateTime"] = start_date_time
-      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
-      if endDateTime <= now: 
-        kwargs["endDateTime"] = endDateTime
-      else :
-        kwargs["endDateTime"] = now
-
+    for kwargs in self.get_start_end_date(bookmark):
       def get_data():
         return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
       yield get_data
