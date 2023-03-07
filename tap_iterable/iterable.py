@@ -12,9 +12,11 @@ import requests
 import logging
 import tap_iterable.helper as helper
 
+# from debugpy import listen, wait_for_client
+# listen(8000)
+# wait_for_client()
 
 LOGGER = logging.getLogger()
-
 
 
 class Iterable(object):
@@ -49,9 +51,10 @@ class Iterable(object):
     LOGGER.info("Received 429 -- sleeping for %s seconds",
                 details['wait'])
 
-  @backoff.on_exception(backoff.expo,
+  @backoff.on_exception(backoff.constant,
                         requests.exceptions.HTTPError,
-                        on_backoff=retry_handler,
+                        jitter=None,
+                        interval=30,
                         max_tries=10)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
@@ -99,7 +102,8 @@ class Iterable(object):
       kwargs = {
         "listId": l["id"]
       }
-      users = self._get("lists/getUsers", **kwargs)
+      users = [x for x in self._get(
+          "lists/getUsers", **kwargs).content.decode().split('\n') if x.strip()]
       for user in users:
         yield {
           "email": user,
