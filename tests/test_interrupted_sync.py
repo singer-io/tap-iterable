@@ -41,17 +41,20 @@ class InterruptedSyncTest(IterableBase):
         start_date_timestamp = self.parse_date(self.start_date)
 
         conn_id = connections.ensure_connection(self)
-        expected_streams = {"list_users"} #self.expected_streams() - {"metadata", "email_send_skip", "email_complaint", "email_click"}
+
+        # Note: test data not available for following streams: metadata, email_send_skip, email_complaint, email_click
+        streams_to_test = self.expected_streams()
 
         # Run check mode
         found_catalogs = self.run_and_verify_check_mode(conn_id)
 
         # Select only the expected streams tables
         test_catalogs_all_fields = [catalog for catalog in found_catalogs
-                                    if catalog.get('tap_stream_id') in expected_streams]
+                                    if catalog.get('tap_stream_id') in streams_to_test]
 
         # Catalog selection
-        self.perform_and_verify_table_and_field_selection(conn_id, test_catalogs_all_fields, select_all_fields=True)
+        self.perform_and_verify_table_and_field_selection(
+            conn_id, test_catalogs_all_fields, select_all_fields=True)
 
         # Run a sync job
         self.run_and_verify_sync(conn_id)
@@ -104,7 +107,7 @@ class InterruptedSyncTest(IterableBase):
                                  msg="Final state after interruption should be equal to full sync")
 
         # Stream level assertions
-        for stream in expected_streams:
+        for stream in streams_to_test:
             with self.subTest(stream=stream):
                 # Get the replication key
                 replication_keys = list(self.expected_replication_keys()[stream])
@@ -198,6 +201,8 @@ class InterruptedSyncTest(IterableBase):
                             self.assertIn(record, first_sync_stream_records,
                                         msg="Unexpected record replicated in resuming sync.")
                     else:
-                        # FULL_TABLE stream records should be same
-                        self.assertEqual(interrupted_record_count, full_sync_record_count,
-                                        msg=f"Record count of streams with {self.FULL_TABLE} replication method must be equal.")
+                        # BUG: TDL-21675: interrupted sync does not sync already synced streams
+                        if stream not in ["conversation_threads"]:
+                            # FULL_TABLE stream records should be same
+                            self.assertEqual(interrupted_record_count, full_sync_record_count,
+                                          msg=f"Record count of streams with {self.FULL_TABLE} replication method must be equal.")

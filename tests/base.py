@@ -1,7 +1,8 @@
+import dateutil
 from tap_tester import connections, menagerie, runner
 import os
 import unittest
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 import time
 
 from tap_tester import connections, menagerie, runner
@@ -23,8 +24,7 @@ class IterableBase(unittest.TestCase):
     REPLICATION_DATE_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
     BOOKMARK_FOMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
-    first_start_date = '2023-01-25T00:00:00Z'
-    second_start_date = '2023-03-01T00:00:00Z'
+    MISSING_DATA_STREAMS = {"metadata", "email_send_skip", "email_complaint", "email_click"}
 
     def tap_name(self):
         return "tap-iterable"
@@ -53,7 +53,7 @@ class IterableBase(unittest.TestCase):
         Setting required properties as environment variables.
         """
         return_value = {
-            'start_date':'2023-01-25T00:00:00Z', # '2018-03-25T00:00:00Z' for faster test runs
+            'start_date':'2023-01-25T00:00:00Z', 
             'api_key':os.getenv('ITERABLE_API_KEY'),
             "api_window_in_days": 30
         }
@@ -162,11 +162,14 @@ class IterableBase(unittest.TestCase):
             }
         }
 
-    def expected_streams(self):
+    def expected_streams(self, include_missing_data_streams=False):
         """
         Returns expected streams for tap.
         """
-        return set(self.expected_metadata().keys())
+        if include_missing_data_streams:
+            return set(self.expected_metadata().keys())
+            
+        return set(self.expected_metadata().keys()) - self.MISSING_DATA_STREAMS
 
     def expected_replication_keys(self):
         """
@@ -349,3 +352,24 @@ class IterableBase(unittest.TestCase):
         boolean result.
         """
         return self.expected_metadata()[stream][self.REPLICATION_METHOD] == self.INCREMENTAL
+
+    def calculated_states_by_stream(self, current_state):
+        timedelta_by_stream = {stream: [0,0,5]  # {stream_name: [days, hours, minutes], ...}
+                               for stream in self.expected_streams()}
+
+        stream_to_calculated_state = {"bookmarks": {stream: {list(self.expected_replication_keys(
+        )[stream])[0]: None} for stream in current_state['bookmarks'].keys()}}
+
+        for stream, state in current_state['bookmarks'].items():
+            replication_key = list(self.expected_replication_keys()[stream])[0]
+            state_as_datetime = dateutil.parser.parse(state[replication_key])
+
+            days, hours, minutes = timedelta_by_stream[stream]
+            calculated_state_as_datetime = state_as_datetime - timedelta(days=days, hours=hours, minutes=minutes)
+
+            state_format = "%Y-%m-%dT00:00:00Z"
+            calculated_state_formatted = dt.strftime(calculated_state_as_datetime, state_format)
+
+            stream_to_calculated_state["bookmarks"][stream][replication_key] = calculated_state_formatted
+
+        return stream_to_calculated_state

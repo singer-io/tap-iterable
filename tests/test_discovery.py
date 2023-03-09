@@ -26,9 +26,10 @@ class IterableDiscoveryTest(IterableBase):
         - Verify that primary, replication keys are given the inclusion of automatic.
         - Verify that all other fields have inclusion of available metadata.
         """
-        streams_to_test = self.expected_streams()
 
         conn_id = connections.ensure_connection(self)
+
+        streams_to_test = self.expected_streams(include_missing_data_streams=True)
 
         found_catalogs = self.run_and_verify_check_mode(conn_id)
 
@@ -36,8 +37,7 @@ class IterableDiscoveryTest(IterableBase):
 
         # Verify number of actual streams discovered match expected
         # Verify the stream names discovered were what we expect
-        expected_streams = streams_to_test
-        self.assertEqual(expected_streams, found_catalog_names)
+        self.assertEqual(streams_to_test, found_catalog_names)
 
         # Verify stream names follow naming convention
         # Streams should only have lowercase alphas and underscores
