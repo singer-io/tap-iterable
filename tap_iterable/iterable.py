@@ -142,10 +142,10 @@ class Iterable(object):
       "InApp",
       "SMS"
     ]
-    # bookmark value `updatedAt` is getting round off to next second
-    # while putting into the STATE and which is causing 0 records fetched
-    # with existing bookmark value in STATE 
-    bookmark_val = utils.strptime_with_tz(bookmark)- timedelta(seconds=1)
+    # `templates` API bug where it doesn't extract the records 
+    #  where `startDateTime`= 2023-03-01+07%3A31%3A15 though record exists
+    #  hence, substracting one second so that we could extract atleast one record 
+    bookmark_val = utils.strptime_with_tz(bookmark) - timedelta(seconds=1)
     bookmark = utils.strftime(bookmark_val)
     for template_type in template_types:
       for medium in message_mediums:

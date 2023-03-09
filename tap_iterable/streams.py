@@ -15,6 +15,7 @@ from singer import utils
 from singer.metrics import Point
 from dateutil.parser import parse
 from tap_iterable.context import Context
+import tap_iterable.helper as helper
 
 
 LOGGER = singer.get_logger()
@@ -23,17 +24,6 @@ KEY_PROPERTIES = ['id']
 
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
-
-
-def epoch_to_datetime_string(milliseconds):
-    datetime_string = None
-    try:
-        datetime_string = time.strftime("%Y-%m-%d %H:%M:%S %Z", time.localtime(milliseconds / 1000))
-    except TypeError:
-        # If fails, it means format already datetime string.
-        datetime_string = milliseconds
-        pass
-    return datetime_string
 
 
 class Stream():
@@ -53,13 +43,13 @@ class Stream():
         if self.session_bookmark is None:
             return True
         # Assume value is in epoch milliseconds.
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         return utils.strptime_with_tz(value_in_date_time) > utils.strptime_with_tz(self.session_bookmark)
 
 
     def update_session_bookmark(self, value):
         # Assume value is epoch milliseconds.
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         if self.is_session_bookmark_old(value_in_date_time):
             self.session_bookmark = value_in_date_time
 
@@ -75,14 +65,14 @@ class Stream():
         name = self.name if not name else name
         # when `value` is None, it means to set the bookmark to None
         # Assume value is epoch time
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         if value_in_date_time is None or self.is_bookmark_old(state, value_in_date_time, name):
             singer.write_bookmark(state, name, self.replication_key, utils.strftime(utils.strptime_to_utc(value_in_date_time)))
 
 
     def is_bookmark_old(self, state, value, name=None):
         # Assume value is epoch time.
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         current_bookmark = self.get_bookmark(state, name)
         return utils.strptime_with_tz(value_in_date_time) >= utils.strptime_with_tz(current_bookmark)
 
