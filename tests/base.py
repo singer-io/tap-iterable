@@ -191,6 +191,13 @@ class IterableBase(unittest.TestCase):
         """
         return {table: properties.get(self.REPLICATION_METHOD, set()) for table, properties
                 in self.expected_metadata().items()}
+    
+    def expected_automatic_fields(self):
+        auto_fields = {}
+        for k, v in self.expected_metadata().items():
+            auto_fields[k] = v.get(self.PRIMARY_KEYS, set()) | v.get(self.REPLICATION_KEYS, set()) \
+                | v.get(self.FOREIGN_KEYS, set())
+        return auto_fields
 
     def select_found_catalogs(self, conn_id, catalogs, only_streams=None,
                               deselect_all_fields: bool = False, non_selected_props=[]):
