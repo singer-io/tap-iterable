@@ -1266,14 +1266,8 @@
     "itblInternal.emailDomain": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "string"
-        ]
-      }
+        "string"
+      ]
     },
     "profileUpdatedAt": {
       "type": [
