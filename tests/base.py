@@ -13,8 +13,6 @@ class IterableBase(unittest.TestCase):
     Base class for tap.
     """
 
-    START_DATE = ""
-    API_WINDOWS_IN_DAYS = None
     PRIMARY_KEYS = "table-key-properties"
     REPLICATION_METHOD = "forced-replication-method"
     REPLICATION_KEYS = "valid-replication-keys"
@@ -25,6 +23,10 @@ class IterableBase(unittest.TestCase):
     REPLICATION_DATE_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
     BOOKMARK_FOMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
+    START_DATE = ""
+    API_WINDOWS_IN_DAYS = 60
+
+    # Skipping streams from testing because we were unable to generate test data
     MISSING_DATA_STREAMS = {"metadata", "email_send_skip", "email_complaint", "email_click"}
 
     def tap_name(self):
