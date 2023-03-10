@@ -4,7 +4,7 @@
 #
 
 from datetime import datetime, timedelta
-from singer import utils
+from singer.utils import strptime_with_tz, strftime
 from urllib.parse import urlencode
 import backoff
 import json
@@ -31,16 +31,16 @@ class Iterable(object):
 
 
   def _daterange(self, start_date, end_date):
-    total_days = (utils.strptime_with_tz(end_date) - utils.strptime_with_tz(start_date)).days
+    total_days = (strptime_with_tz(end_date) - strptime_with_tz(start_date)).days
     remaining_days = int(total_days / self.api_window_in_days)
     if total_days >= self.api_window_in_days:
       for n in range(remaining_days):
-        yield ((utils.strptime_with_tz(start_date) + n * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S"))
+        yield ((strptime_with_tz(start_date) + n * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S"))
       if int(total_days % self.api_window_in_days) > 0 :
-        start_slot_date = (utils.strptime_with_tz(start_date) + remaining_days * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+        start_slot_date = (strptime_with_tz(start_date) + remaining_days * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
         yield (start_slot_date)
     else:
-      yield utils.strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
+      yield strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
 
 
   def retry_handler(details):
@@ -109,10 +109,10 @@ class Iterable(object):
 
 
   def campaigns(self, column_name=None, bookmark=None):
-    bookmark = utils.strptime_with_tz(bookmark)
+    bookmark = strptime_with_tz(bookmark)
     res = self.get("campaigns")
     for c in res["campaigns"]:
-      rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
+      rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
       if rec_date_time >= bookmark:
         yield c
 
@@ -145,14 +145,14 @@ class Iterable(object):
     # `templates` API bug where it doesn't extract the records 
     #  where `startDateTime`= 2023-03-01+07%3A31%3A15 though record exists
     #  hence, substracting one second so that we could extract atleast one record 
-    bookmark_val = utils.strptime_with_tz(bookmark) - timedelta(seconds=1)
-    bookmark = utils.strftime(bookmark_val)
+    bookmark_val = strptime_with_tz(bookmark) - timedelta(seconds=1)
+    bookmark = strftime(bookmark_val)
     for template_type in template_types:
       for medium in message_mediums:
         for kwargs in self.get_start_end_date(bookmark):
           res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
           for t in res["templates"]:
-            rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(t["updatedAt"]))
+            rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(t["updatedAt"]))
             if rec_date_time >= bookmark_val:
               yield t
 
@@ -171,7 +171,7 @@ class Iterable(object):
     kwargs = {}
     for start_date_time in self._daterange(bookmark, now):
       kwargs["startDateTime"] = start_date_time
-      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(
+      endDateTime = (strptime_with_tz(start_date_time) + timedelta(
         self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
       if endDateTime <= now:
         kwargs["endDateTime"] = endDateTime

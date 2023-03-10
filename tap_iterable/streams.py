@@ -12,7 +12,6 @@ import time
 import tempfile
 from singer import metadata
 from singer import utils
-from singer.metrics import Point
 from dateutil.parser import parse
 from tap_iterable.context import Context
 import tap_iterable.helper as helper
