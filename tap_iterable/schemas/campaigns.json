@@ -112,6 +112,12 @@
         "null",
         "string"
       ]
+    },
+    "updatedByUserId": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

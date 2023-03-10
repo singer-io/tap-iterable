@@ -21,6 +21,26 @@
         "null",
         "number"
       ]
+    },
+    "createdAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "subscriptionPolicy": {
+      "type": [
+        "null",
+        "number"
+      ]
     }
   }
 }
