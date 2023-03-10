@@ -130,6 +130,8 @@ class Stream():
                         count += 1
                         tf.write(b'\n')
                 # Fix for TDL-22208
+                # The expected records were getting added to temp file but observing empty file while reading
+                # Hence, added below line to move file pointer to the beginning of a file 
                 tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
