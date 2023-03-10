@@ -39,7 +39,7 @@
     "subscriptionPolicy": {
       "type": [
         "null",
-        "number"
+        "string"
       ]
     }
   }
