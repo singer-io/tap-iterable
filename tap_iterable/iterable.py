@@ -1,3 +1,4 @@
+# pylint: disable=E1136, E0213
 #
 # Module dependencies.
 #
@@ -9,10 +10,9 @@ import backoff
 import json
 import requests
 import logging
+import tap_iterable.helper as helper
 
-
-logger = logging.getLogger()
-
+LOGGER = logging.getLogger()
 
 
 class Iterable(object):
@@ -44,12 +44,13 @@ class Iterable(object):
 
 
   def retry_handler(details):
-    logger.info("Received 429 -- sleeping for %s seconds",
+    LOGGER.info("Received 429 -- sleeping for %s seconds",
                 details['wait'])
 
-  @backoff.on_exception(backoff.expo,
+  @backoff.on_exception(backoff.constant,
                         requests.exceptions.HTTPError,
-                        on_backoff=retry_handler,
+                        jitter=None,
+                        interval=30,
                         max_tries=10)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
@@ -61,10 +62,10 @@ class Iterable(object):
     for key, value in kwargs.items():
       params[key] = value
     uri += "?{params}".format(params=urlencode(params))
-    logger.info("GET request to {uri}".format(uri=uri))
+    LOGGER.info("GET request to {uri}".format(uri=uri))
 
     response = requests.get(uri, stream=stream, headers=headers, params=params)
-    logger.info("Response status:%s", response.status_code)
+    LOGGER.info("Response status:%s", response.status_code)
 
     response.raise_for_status()
     return response
@@ -97,7 +98,8 @@ class Iterable(object):
       kwargs = {
         "listId": l["id"]
       }
-      users = self._get("lists/getUsers", **kwargs)
+      users = [x for x in self._get(
+          "lists/getUsers", **kwargs).content.decode().split('\n') if x.strip()]
       for user in users:
         yield {
           "email": user,
@@ -107,9 +109,12 @@ class Iterable(object):
 
 
   def campaigns(self, column_name=None, bookmark=None):
+    bookmark = utils.strptime_with_tz(bookmark)
     res = self.get("campaigns")
     for c in res["campaigns"]:
-      yield c
+      rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
+      if rec_date_time >= bookmark:
+        yield c
 
 
   def channels(self, column_name, bookmark):
@@ -137,11 +142,19 @@ class Iterable(object):
       "InApp",
       "SMS"
     ]
+    # `templates` API bug where it doesn't extract the records 
+    #  where `startDateTime`= 2023-03-01+07%3A31%3A15 though record exists
+    #  hence, substracting one second so that we could extract atleast one record 
+    bookmark_val = utils.strptime_with_tz(bookmark) - timedelta(seconds=1)
+    bookmark = utils.strftime(bookmark_val)
     for template_type in template_types:
       for medium in message_mediums:
-        res = self.get("templates", templateTypes=template_type, messageMedium=medium)
-        for t in res["templates"]:
-          yield t
+        for kwargs in self.get_start_end_date(bookmark):
+          res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
+          for t in res["templates"]:
+            rec_date_time = utils.strptime_with_tz(helper.epoch_to_datetime_string(t["updatedAt"]))
+            if rec_date_time >= bookmark_val:
+              yield t
 
 
   def metadata(self, column_name=None, bookmark=None):
