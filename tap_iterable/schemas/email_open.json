@@ -57,6 +57,24 @@
         "string"
       ]
     },
+    "contentId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "eventName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "proxySource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "userAgentDevice": {
       "type": [
         "null",
