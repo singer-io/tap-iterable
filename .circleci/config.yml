@@ -17,7 +17,8 @@ jobs:
           name: 'pylint'
           command: |
             source /usr/local/share/virtualenvs/tap-iterable/bin/activate
-            pylint tap_iterable -d C,R,W
+            echo "skipping $PYLINT_DISABLE_LIST"
+            pylint tap_iterable --disable "$PYLINT_DISABLE_LIST"
       # - run:
       #     name: 'Unit Tests'
       #     command: |
