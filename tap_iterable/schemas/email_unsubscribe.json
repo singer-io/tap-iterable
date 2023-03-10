@@ -56,7 +56,12 @@
         "null",
         "array"
       ],
-      "items": {}
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      }
     },
     "workflowId": {
       "type": [

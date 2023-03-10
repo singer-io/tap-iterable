@@ -7,7 +7,7 @@
     "id": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "name": {

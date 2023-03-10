@@ -73,14 +73,24 @@
         "null",
         "array"
       ],
-      "items": {}
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      }
     },
     "suppressionListIds": {
       "type": [
         "null",
         "array"
       ],
-      "items": {}
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      }
     },
     "sendSize": {
       "type": [
@@ -91,13 +101,13 @@
     "recurringCampaignId": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "workflowId": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "labels": {
