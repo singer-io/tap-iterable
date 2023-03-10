@@ -7,7 +7,7 @@
     "templateId": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "createdAt": {
@@ -39,13 +39,13 @@
     "messageTypeId": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "campaignId": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "clientTemplateId": {

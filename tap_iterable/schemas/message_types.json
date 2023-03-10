@@ -7,7 +7,7 @@
     "id": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     },
     "name": {
@@ -19,7 +19,7 @@
     "channelId": {
       "type": [
         "null",
-        "number"
+        "integer"
       ]
     }
   }
