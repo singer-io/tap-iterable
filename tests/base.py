@@ -63,7 +63,7 @@ class IterableBase(unittest.TestCase):
 
         # Reassign start date
         return_value["start_date"] = self.START_DATE
-        return_value["api_windows_in_days"] = self.API_WINDOWS_IN_DAYS
+        return_value["api_window_in_days"] = self.API_WINDOWS_IN_DAYS
         return return_value
 
     def expected_metadata(self):

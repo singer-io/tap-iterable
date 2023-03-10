@@ -20,17 +20,26 @@ class AllFieldsTest(IterableBase):
             "itblInternal"
         },
         "email_open": {
-            "itblInternal"
+            "itblInternal",
+			"eventName"
         },
+		"email_subscribe": {
+			"eventName",
+			"campaignId",
+			"templateId",
+			"emailListId"
+		},
         "email_unsubscribe": {
             "emailListIds",
             "workflowId",
             "emailListId",
             "itblInternal",
-            "channelId"
+            "channelId",
+			"eventName"
         },
         "email_bounce": {
-            "itblInternal"
+            "itblInternal",
+			"eventName"
         },
         "users": {
             "accessIp",
@@ -237,7 +246,7 @@ class AllFieldsTest(IterableBase):
         # We need to set older start date to increase stream field coverage
         # While doing so test performace may impact so setting large window size
         self.START_DATE = '2018-09-01T00:00:00Z'
-        # self.API_WINDOWS_IN_DAYS = 365
+        self.API_WINDOWS_IN_DAYS = 365
 
         # instantiate connection
         conn_id = connections.ensure_connection(self, original_properties=False)
@@ -296,4 +305,4 @@ class AllFieldsTest(IterableBase):
                                 msg=f'{expected_automatic_fields-actual_all_fields} is not in "expected_all_keys"')
 
                 # verify all fields for each stream were replicated
-                self.assertSetEqual(expected_all_fields - self.MISSING_FILEDS[stream], actual_all_fields)
+                self.assertSetEqual(expected_all_fields - self.MISSING_FILEDS.get(stream, set()), actual_all_fields)
