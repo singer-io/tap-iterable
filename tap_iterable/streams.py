@@ -168,7 +168,7 @@ class Lists(Stream):
 class ListUsers(Stream):
     name = "list_users"
     replication_method = "FULL_TABLE"
-    key_properties = []
+    key_properties = ["email", "listId"]
 
 
 class Campaigns(Stream):
@@ -291,7 +291,7 @@ class EmailUnsubscribe(Stream):
 class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
-    key_properties = []
+    key_properties = ["email"]
     replication_key = "profileUpdatedAt"
     data_type_name = "user"
 
