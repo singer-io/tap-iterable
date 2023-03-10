@@ -7,14 +7,13 @@
 import json
 import sys
 import singer
-from singer import metadata
 from tap_iterable.iterable import Iterable
 from tap_iterable.discover import discover_streams
-from tap_iterable.sync import sync_stream, sync
+from tap_iterable.sync import sync
 from tap_iterable.context import Context
 
 
-logger = singer.get_logger()
+LOGGER = singer.get_logger()
 
 
 REQUIRED_CONFIG_KEYS = [
@@ -25,12 +24,13 @@ REQUIRED_CONFIG_KEYS = [
 
 
 def discover(client):
-    logger.info("Starting discover")
+    LOGGER.info("Starting discover")
     catalog = {"streams": discover_streams(client)}
     json.dump(catalog, sys.stdout, indent=2)
-    logger.info("Finished discover")
+    LOGGER.info("Finished discover")
 
-@singer.utils.handle_top_exception(logger)
+
+@singer.utils.handle_top_exception(LOGGER)
 def main():
     parsed_args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)
 

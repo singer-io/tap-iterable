@@ -1,18 +1,17 @@
+# pylint: disable=E1136, E0213
 #
 # Module dependencies.
 #
 
 from datetime import datetime, timedelta
-from singer import utils
+from singer.utils import strptime_with_tz, strftime
 from urllib.parse import urlencode
 import backoff
 import requests
 import logging
-from tap_iterable.exceptions import IterableRateLimitError
+import tap_iterable.helper as helper
 
-
-logger = logging.getLogger()
-
+LOGGER = logging.getLogger()
 
 class Iterable(object):
   """ Simple wrapper for Iterable. """
@@ -30,26 +29,27 @@ class Iterable(object):
 
 
   def _daterange(self, start_date, end_date):
-    total_days = (utils.strptime_with_tz(end_date) - utils.strptime_with_tz(start_date)).days
+    total_days = (strptime_with_tz(end_date) - strptime_with_tz(start_date)).days
     remaining_days = int(total_days / self.api_window_in_days)
     if total_days >= self.api_window_in_days:
       for n in range(remaining_days):
-        yield ((utils.strptime_with_tz(start_date) + n * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S"))
+        yield ((strptime_with_tz(start_date) + n * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S"))
       if int(total_days % self.api_window_in_days) > 0 :
-        start_slot_date = (utils.strptime_with_tz(start_date) + remaining_days * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+        start_slot_date = (strptime_with_tz(start_date) + remaining_days * timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
         yield (start_slot_date)
     else:
-      yield utils.strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
+      yield strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
+
 
   def retry_handler(details):
-    logger.info("Received 429 -- sleeping for %s seconds",
+    LOGGER.info("Received 429 -- sleeping for %s seconds",
                 details['wait'])
 
-
   @backoff.on_exception(backoff.constant,
-                        IterableRateLimitError,
+                        requests.exceptions.HTTPError,
+                        jitter=None,
                         interval=30,
-                        max_tries=3)
+                        max_tries=10)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
 
@@ -62,10 +62,10 @@ class Iterable(object):
     uri += "?{params}".format(params=urlencode(params))
 
     headers = { "api_key": self.api_key }
-    logger.info("GET request to {uri}".format(uri=uri))
 
     response = requests.get(uri, stream=stream, headers=headers, params=params)
-    logger.info("Request response: %s, response status:%s",response.text, response.status_code)
+    LOGGER.info("Response status:%s", response.status_code)
+
     response.raise_for_status()
     return response
 
@@ -97,7 +97,8 @@ class Iterable(object):
       kwargs = {
         "listId": l["id"]
       }
-      users = self._get("lists/getUsers", **kwargs)
+      users = [x for x in self._get(
+          "lists/getUsers", **kwargs).content.decode().split('\n') if x.strip()]
       for user in users:
         yield {
           "email": user,
@@ -107,9 +108,12 @@ class Iterable(object):
 
 
   def campaigns(self, column_name=None, bookmark=None):
+    bookmark = strptime_with_tz(bookmark)
     res = self.get("campaigns")
     for c in res["campaigns"]:
-      yield c
+      rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
+      if rec_date_time >= bookmark:
+        yield c
 
 
   def channels(self, column_name, bookmark):
@@ -137,11 +141,19 @@ class Iterable(object):
       "InApp",
       "SMS"
     ]
+    # `templates` API bug where it doesn't extract the records 
+    #  where `startDateTime`= 2023-03-01+07%3A31%3A15 though record exists
+    #  hence, substracting one second so that we could extract atleast one record 
+    bookmark_val = strptime_with_tz(bookmark) - timedelta(seconds=1)
+    bookmark = strftime(bookmark_val)
     for template_type in template_types:
       for medium in message_mediums:
-        res = self.get("templates", templateTypes=template_type, messageMedium=medium)
-        for t in res["templates"]:
-          yield t
+        for kwargs in self.get_start_end_date(bookmark):
+          res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
+          for t in res["templates"]:
+            rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(t["updatedAt"]))
+            if rec_date_time >= bookmark_val:
+              yield t
 
 
   def metadata(self, column_name=None, bookmark=None):
@@ -153,17 +165,22 @@ class Iterable(object):
         yield value
 
 
-  def get_data_export_generator(self, data_type_name, bookmark=None):
+  def get_start_end_date(self, bookmark):
     now = self._now()
     kwargs = {}
     for start_date_time in self._daterange(bookmark, now):
       kwargs["startDateTime"] = start_date_time
-      endDateTime = (utils.strptime_with_tz(start_date_time) + timedelta(self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
-      if endDateTime <= now: 
+      endDateTime = (strptime_with_tz(start_date_time) + timedelta(
+        self.api_window_in_days)).strftime("%Y-%m-%d %H:%M:%S")
+      if endDateTime <= now:
         kwargs["endDateTime"] = endDateTime
-      else :
+      else:
         kwargs["endDateTime"] = now
+      yield kwargs
 
+
+  def get_data_export_generator(self, data_type_name, bookmark=None):
+    for kwargs in self.get_start_end_date(bookmark):
       def get_data():
         return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
-      yield get_data
+      yield get_data      

@@ -18,14 +18,14 @@ jobs:
           command: |
             source /usr/local/share/virtualenvs/tap-iterable/bin/activate
             pylint tap_iterable -d C,R,W
-      # - run:
-      #     name: 'Unit Tests'
-      #     command: |
-      #       source /usr/local/share/virtualenvs/tap-iterable/bin/activate
-      #       pip install coverage
-      #       pip install nose coverage parameterized
-      #       nosetests --with-coverage --cover-erase --cover-package=tap_iterable --cover-html-dir=htmlcov tests/unittests
-      #       coverage html
+      - run:
+          name: 'Unit Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-iterable/bin/activate
+            pip install coverage
+            pip install nose coverage parameterized
+            nosetests --with-coverage --cover-erase --cover-package=tap_iterable --cover-html-dir=htmlcov tests/unittests
+            coverage html
       - store_test_results:
           path: test_output/report.xml
       - store_artifacts:
