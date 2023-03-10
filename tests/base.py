@@ -14,6 +14,7 @@ class IterableBase(unittest.TestCase):
     """
 
     START_DATE = ""
+    API_WINDOWS_IN_DAYS = None
     PRIMARY_KEYS = "table-key-properties"
     REPLICATION_METHOD = "forced-replication-method"
     REPLICATION_KEYS = "valid-replication-keys"
@@ -62,6 +63,7 @@ class IterableBase(unittest.TestCase):
 
         # Reassign start date
         return_value["start_date"] = self.START_DATE
+        return_value["api_windows_in_days"] = self.API_WINDOWS_IN_DAYS
         return return_value
 
     def expected_metadata(self):
@@ -134,7 +136,7 @@ class IterableBase(unittest.TestCase):
                 self.OBEYS_START_DATE: True
             },
             "list_users": {
-                self.PRIMARY_KEYS: set(),
+                self.PRIMARY_KEYS: {"email", "listId"},
                 self.REPLICATION_METHOD: self.FULL_TABLE,
                 self.OBEYS_START_DATE: True
             },
@@ -155,7 +157,7 @@ class IterableBase(unittest.TestCase):
                 self.OBEYS_START_DATE: True
             },
             "users": {
-                self.PRIMARY_KEYS: set(),
+                self.PRIMARY_KEYS: {"email"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"profileUpdatedAt"},
                 self.OBEYS_START_DATE: True
@@ -195,8 +197,7 @@ class IterableBase(unittest.TestCase):
     def expected_automatic_fields(self):
         auto_fields = {}
         for k, v in self.expected_metadata().items():
-            auto_fields[k] = v.get(self.PRIMARY_KEYS, set()) | v.get(self.REPLICATION_KEYS, set()) \
-                | v.get(self.FOREIGN_KEYS, set())
+            auto_fields[k] = v.get(self.PRIMARY_KEYS, set()) | v.get(self.REPLICATION_KEYS, set())
         return auto_fields
 
     def select_found_catalogs(self, conn_id, catalogs, only_streams=None,

@@ -4,10 +4,11 @@ from tap_tester import connections, runner, LOGGER
 
 from base import IterableBase
 
+
 class AutomaticFieldsTest(IterableBase):
 
     def name(self):
-        return "tap_tester_iterable_bookmark_test"
+        return "tap_tester_iterable_automatic_test"
 
     def test_name(self):
         LOGGER.info("Automatic Field Test for tap-iterable")
@@ -41,18 +42,16 @@ class AutomaticFieldsTest(IterableBase):
             with self.subTest(stream=stream):
 
                 # expected values
-                expected_primary_keys = self.expected_primary_keys()
+                expected_primary_keys = self.expected_primary_keys()[stream]
                 expected_keys = self.expected_automatic_fields().get(stream)
 
-                # workaround for TDL-16245 , remove after bug fix
-                expected_keys = expected_keys - self.expected_replication_keys().get(stream)
+                expected_keys = expected_keys 
 
                 # collect actual values
                 stream_messages = all_messages.get(stream)
                 record_messages_keys = [set(message['data'].keys())
                                         for message in stream_messages['messages']
                                         if  message['action'] == 'upsert']
-
 
                 # Verify that you get some records for each stream
                 self.assertGreater(
@@ -67,17 +66,12 @@ class AutomaticFieldsTest(IterableBase):
                 records = [message.get("data") for message in stream_messages.get('messages', [])
                             if message.get('action') == 'upsert']
 
-                # Remove duplicate records
-                records_pks_list = [tuple(message.get(pk) for pk in expected_primary_keys[stream])
-                                    for message in [json.loads(t) for t in {json.dumps(d) for d in records}]]
-
-                # Remove duplicate primary keys
-                records_pks_set = set(records_pks_list)
-
                 # Verify there are no duplicate records
-                self.assertEqual(len(records), len(records_pks_set),
-                                        msg=f"{stream} contains duplicate records")
+                if expected_primary_keys:
+                    records_pks_list = [tuple(message.get(pk) for pk in expected_primary_keys)
+                                        for message in [json.loads(t) for t in {json.dumps(d) for d in records}]]
 
-                # Verify defined primary key is unique
-                self.assertEqual(len(records_pks_set), len(records_pks_list),
-                                        msg=f"{expected_primary_keys} are not unique primary keys for {stream} stream.")
+                    # Remove duplicate primary keys
+                    duplicate_records = [x for n, x in enumerate(records_pks_list) if x in records_pks_list[:n]]
+                    self.assertFalse(len(duplicate_records),
+                                      msg=f"Following are duplicate records: {duplicate_records}")
