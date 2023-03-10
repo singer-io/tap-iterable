@@ -104,7 +104,6 @@ class Stream():
         stream_metadata = metadata.to_list(stream_metadata)
         return stream_metadata
 
-
     # The main sync function.
     def sync(self, state):
         get_data = getattr(self.client, self.name)
