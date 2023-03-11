@@ -1432,12 +1432,6 @@
         ]
       }
     },
-    "\ufefffirstName": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
     "badgeCount": {
       "type": [
         "null",

@@ -28,6 +28,12 @@
         "null",
         "string"
       ]
+    },
+    "description":{
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

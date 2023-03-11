@@ -17,6 +17,42 @@
         "string"
       ]
     },
+    "campaignId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "channelIds": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      }
+    },
+    "eventName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "templateId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "userId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "emailListIds": {
       "type": [
         "null",
