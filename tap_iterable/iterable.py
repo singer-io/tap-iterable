@@ -181,4 +181,5 @@ class Iterable(object):
     for kwargs in self.get_start_end_date(bookmark):
       def get_data():
         return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
-      yield get_data      
+      yield get_data
+     
