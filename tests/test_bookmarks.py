@@ -163,6 +163,9 @@ class BookmarksTest(IterableBase):
                     # verify the number of records in the second sync is the same as the first
                     self.assertEqual(second_sync_count, first_sync_count)
 
+                    # Verify both syncs have same records
+                    for record in first_sync_messages:
+                        self.assertIn(record, second_sync_messages)
                 else:
                     raise NotImplementedError(
                         "INVALID EXPECTATIONS\t\tSTREAM: {} REPLICATION_METHOD: {}".format(stream, expected_replication_method))
