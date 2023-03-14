@@ -6,6 +6,8 @@ from datetime import datetime as dt, timedelta
 import time
 
 from tap_tester import connections, menagerie, runner
+from tap_tester.logger import LOGGER
+
 
 
 class IterableBase(unittest.TestCase):
@@ -56,7 +58,7 @@ class IterableBase(unittest.TestCase):
         Setting required properties as environment variables.
         """
         return_value = {
-            'start_date':'2023-01-25T00:00:00Z', 
+            'start_date':'2023-01-25T00:00:00Z',
             'api_key':os.getenv('ITERABLE_API_KEY'),
             "api_window_in_days": 30
         }
@@ -175,6 +177,13 @@ class IterableBase(unittest.TestCase):
             
         return set(self.expected_metadata().keys()) - self.MISSING_DATA_STREAMS
 
+    def expected_automatic_fields(self):
+        """Retrieving primary keys and replication keys as an automatic
+        fields."""        
+        return {table: (properties.get(self.PRIMARY_KEYS, set()) | properties.get(self.REPLICATION_KEYS, set())) 
+                for table, properties
+                in self.expected_metadata().items()}
+
     def expected_replication_keys(self):
         """
         Returns expected replication keys for streams in tap.
@@ -222,7 +231,7 @@ class IterableBase(unittest.TestCase):
                                                                schema,
                                                                additional_md=additional_md,
                                                                non_selected_fields=non_selected_properties)
-
+    
     @staticmethod
     def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
         """Select all streams and all fields within streams"""
@@ -237,7 +246,7 @@ class IterableBase(unittest.TestCase):
 
             connections.select_catalog_and_fields_via_metadata(
                 conn_id, catalog, schema, [], non_selected_properties)
-
+            
     def perform_and_verify_table_and_field_selection(self,
                                                      conn_id,
                                                      test_catalogs,
@@ -275,6 +284,69 @@ class IterableBase(unittest.TestCase):
                     field_selected = field_props.get('selected')
                     self.assertTrue(field_selected, msg="Field not selected.")
 
+
+    def perform_and_verify_table_and_field_selection(self, conn_id, test_catalogs, select_all_fields=True):
+        """Perform table and field selection based off of the streams to select
+        set and field selection parameters.
+
+        Verify this results in the expected streams selected and all or
+        no fields selected for those streams.
+        """
+
+        # Select all available fields or select no fields from all testable streams
+        self.select_all_streams_and_fields(conn_id=conn_id, catalogs=test_catalogs, select_all_fields=select_all_fields)
+
+        catalogs = menagerie.get_catalogs(conn_id)
+
+        # Ensure our selection affects the catalog
+        expected_selected = [tc.get("stream_name") for tc in test_catalogs]
+        for cat in catalogs:
+            catalog_entry = menagerie.get_annotated_schema(conn_id, cat["stream_id"])
+
+            # Verify all testable streams are selected
+            selected = catalog_entry.get("annotated-schema").get("selected")
+            LOGGER.info("Validating selection on {}: {}".format(cat["stream_name"], selected))
+            if cat["stream_name"] not in expected_selected:
+                self.assertFalse(selected, msg="Stream selected, but not testable.")
+                continue  # Skip remaining assertions if we aren't selecting this stream
+            self.assertTrue(selected, msg="Stream not selected.")
+
+            if select_all_fields:
+                # Verify all fields within each selected stream are selected
+                for field, field_props in catalog_entry.get("annotated-schema").get("properties").items():
+                    field_selected = field_props.get("selected")
+                    LOGGER.info("\tValidating selection on {}.{}: {}".format(cat["stream_name"], field, field_selected))
+                    self.assertTrue(field_selected, msg="Field not selected.")
+            else:
+                # Verify only automatic fields are selected
+                expected_automatic_fields = self.expected_automatic_fields().get(cat["stream_name"])
+                selected_fields = self.get_selected_fields_from_metadata(catalog_entry["metadata"])
+                self.assertEqual(expected_automatic_fields, selected_fields)
+    
+    @staticmethod
+    def get_selected_fields_from_metadata(metadata):
+        selected_fields = set()
+        for field in metadata:
+            is_field_metadata = len(field['breadcrumb']) > 1
+            inclusion_automatic_or_selected = (field['metadata'].get('inclusion') == 'automatic'
+                                               or field['metadata'].get('selected') is True)
+            if is_field_metadata and inclusion_automatic_or_selected:
+                selected_fields.add(field['breadcrumb'][1])
+        return selected_fields
+    
+    @staticmethod
+    def select_all_streams_and_fields(conn_id, catalogs, select_all_fields=True):
+        """Select all streams and all fields within streams."""
+        for catalog in catalogs:
+            schema = menagerie.get_annotated_schema(conn_id, catalog["stream_id"])
+
+            non_selected_properties = []
+            if not select_all_fields:
+                # Get a list of all properties so that none are selected
+                non_selected_properties = schema.get("annotated-schema", {}).get("properties", {}).keys()
+
+            connections.select_catalog_and_fields_via_metadata(conn_id, catalog, schema, [], non_selected_properties)
+
     def run_and_verify_check_mode(self, conn_id):
         """
         Run the tap in check mode and verify it succeeds.
@@ -293,10 +365,10 @@ class IterableBase(unittest.TestCase):
                            msg="unable to locate schemas for connection {}".format(conn_id))
 
         found_catalog_names = set(map(lambda c: c['stream_name'], found_catalogs))
-        print(found_catalog_names)
+        LOGGER.info(found_catalog_names)
         self.assertSetEqual(set(self.expected_metadata().keys()), found_catalog_names,
                             msg="discovered schemas do not match")
-        print("discovered schemas are OK")
+        LOGGER.info("discovered schemas are OK")
 
         return found_catalogs
 
@@ -319,7 +391,7 @@ class IterableBase(unittest.TestCase):
             sum(sync_record_count.values()), 0,
             msg="failed to replicate any data: {}".format(sync_record_count)
         )
-        print("total replicated row count: {}".format(sum(sync_record_count.values())))
+        LOGGER.info("total replicated row count: {}".format(sum(sync_record_count.values())))
 
         return sync_record_count
 
@@ -329,7 +401,7 @@ class IterableBase(unittest.TestCase):
         """
         date_stripped = int(time.mktime(dt.strptime(dtime, format).timetuple()))
         return date_stripped
-
+    
     @staticmethod
     def parse_date(date_value):
         """
