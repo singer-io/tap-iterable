@@ -11,7 +11,7 @@ import json
 import requests
 import logging
 import tap_iterable.helper as helper
-from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, ERROR_CODE_EXCEPTION_MAPPING, raise_for_error
+from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, raise_for_error
 
 LOGGER = logging.getLogger()
 
