@@ -43,7 +43,7 @@ class TestIterable(unittest.TestCase):
                           'clientTemplateId': 'template_id_6'}
 
         # Act and Assert
-        for value in self.client_obj.templates("mock_column_name", "2023-02-22T07:31:15.000000Z"):
+        for value in self.client_obj.templates("updatedAt", "2023-02-22T07:31:15.000000Z"):
             self.assertEqual(expected_value, value)
 
     @patch('tap_iterable.iterable.requests.get', return_value=MockResponse(mock_response_campaigns_data))
@@ -61,5 +61,5 @@ class TestIterable(unittest.TestCase):
                           'labels': [], 'type': 'Blast'}
 
         # Act and Assert
-        for value in self.client_obj.campaigns("mock_column_name", "2023-03-02 10:18:55+00:00"):
+        for value in self.client_obj.campaigns("updatedAt", "2023-03-02 10:18:55+00:00"):
             self.assertEqual(expected_value, value)
