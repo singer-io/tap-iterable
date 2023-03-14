@@ -83,8 +83,8 @@ class Stream():
         return schema
 
 
-    def load_metadata(self):
-        stream_metadata = metadata.get_standard_metadata(**{"schema": self.load_schema(),
+    def load_metadata(self, schema):
+        stream_metadata = metadata.get_standard_metadata(**{"schema": schema,
                                         "key_properties": self.key_properties,
                                         "valid_replication_keys": [self.replication_key],
                                         "replication_method": self.replication_method})
@@ -166,7 +166,7 @@ class Lists(Stream):
 class ListUsers(Stream):
     name = "list_users"
     replication_method = "FULL_TABLE"
-    key_properties = []
+    key_properties = ["email", "listId"]
 
 
 class Campaigns(Stream):
@@ -289,7 +289,7 @@ class EmailUnsubscribe(Stream):
 class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
-    key_properties = []
+    key_properties = ["email"]
     replication_key = "profileUpdatedAt"
     data_type_name = "user"
 
