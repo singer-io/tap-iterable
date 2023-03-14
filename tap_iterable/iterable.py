@@ -7,11 +7,11 @@ from datetime import datetime, timedelta
 from singer.utils import strptime_with_tz, strftime
 from urllib.parse import urlencode
 import backoff
-import json
 import requests
 import logging
 import tap_iterable.helper as helper
-from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, raise_for_error
+from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, \
+  raise_for_error
 
 LOGGER = logging.getLogger()
 
@@ -109,7 +109,7 @@ class Iterable(object):
     bookmark = strptime_with_tz(bookmark)
     res = self.get("campaigns")
     for c in res["campaigns"]:
-      rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(c["updatedAt"]))
+      rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(c[column_name]))
       if rec_date_time >= bookmark:
         yield c
 
@@ -149,7 +149,7 @@ class Iterable(object):
         for kwargs in self.get_start_end_date(bookmark):
           res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
           for t in res["templates"]:
-            rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(t["updatedAt"]))
+            rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(t[column_name]))
             if rec_date_time >= bookmark_val:
               yield t
 
