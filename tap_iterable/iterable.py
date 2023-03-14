@@ -11,6 +11,7 @@ import json
 import requests
 import logging
 import tap_iterable.helper as helper
+from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, ERROR_CODE_EXCEPTION_MAPPING, raise_for_error
 
 LOGGER = logging.getLogger()
 
@@ -42,16 +43,11 @@ class Iterable(object):
     else:
       yield strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
 
-
-  def retry_handler(details):
-    LOGGER.info("Received 429 -- sleeping for %s seconds",
-                details['wait'])
-
   @backoff.on_exception(backoff.constant,
-                        requests.exceptions.HTTPError,
+                        (IterableRateLimitError, IterableNotAvailableError),
                         jitter=None,
                         interval=30,
-                        max_tries=10)
+                        max_tries=5)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
     uri = "{uri}{path}".format(uri=self.uri, path=path)
@@ -67,7 +63,8 @@ class Iterable(object):
     response = requests.get(uri, stream=stream, headers=headers, params=params)
     LOGGER.info("Response status:%s", response.status_code)
 
-    response.raise_for_status()
+    raise_for_error(response)
+
     return response
 
 
