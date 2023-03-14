@@ -140,6 +140,9 @@ class AllFieldsTest(IterableBase):
         for stream in streams_to_test:
             with self.subTest(stream=stream):
 
+                # verify that we get some records for each stream
+                self.assertGreater(sync_record_count.get(stream), 0)
+                
                 # expected automatic fields
                 expected_automatic_fields = self.expected_automatic_fields().get(stream)
 
@@ -154,9 +157,6 @@ class AllFieldsTest(IterableBase):
                                      if message['action'] == 'upsert']
                 for fields in all_record_fields:
                     actual_all_fields.update(fields)
-
-                # verify that we get some records for each stream
-                self.assertGreater(sync_record_count.get(stream), 0)
 
                 # Verify that more than just the automatic fields are replicated for each stream
                 self.assertTrue(expected_automatic_fields.issubset(actual_all_fields),

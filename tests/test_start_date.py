@@ -26,7 +26,7 @@ class StartDateTest(IterableBase):
         """
 
         self.start_date_1 = self.get_properties()
-        self.start_date_2 = '2023-02-25T00:00:00Z'
+        self.start_date_2 = '2023-02-20T00:00:00Z'
         self.START_DATE = self.start_date_1
 
         ##########################################################################
@@ -51,6 +51,13 @@ class StartDateTest(IterableBase):
         # run initial sync
         record_count_by_stream_1 = self.run_and_verify_sync(conn_id_1)
         synced_records_1 = runner.get_records_from_target_output()
+
+        # Verify that you get some records for each stream
+        for stream in streams_to_test:
+            with self.subTest(stream=stream):
+                self.assertGreater(
+                    record_count_by_stream_1.get(stream, -1), 0,
+                    msg="First sync should sync at least 1 record for testing")
 
         ##########################################################################
         ### Update START DATE Between Syncs
@@ -81,6 +88,11 @@ class StartDateTest(IterableBase):
 
         for stream in streams_to_test:
             with self.subTest(stream=stream):
+
+                # Verify that you get some records for each stream
+                self.assertGreater(
+                    record_count_by_stream_2.get(stream, -1), 0,
+                    msg="The number of records is not over the stream max limit")
 
                 # expected values
                 expected_primary_keys = self.expected_primary_keys()[stream]

@@ -47,6 +47,12 @@ class BookmarksTest(IterableBase):
         first_sync_records = runner.get_records_from_target_output()
         first_sync_bookmarks = menagerie.get_state(conn_id)
 
+        for stream in streams_to_test:
+            with self.subTest(stream=stream):
+                self.assertGreater(
+                    first_sync_record_count.get(stream, -1), 0,
+                    msg="First sync should sync at least 1 record for testing")
+
         #######################
         # Update State between Syncs
         #######################
@@ -71,8 +77,19 @@ class BookmarksTest(IterableBase):
         # Test by Stream
         ########################
 
+        # Verify currently syncing is set to None after successful sync
+        self.assertIn("currently_syncing", first_sync_bookmarks)
+        self.assertIn("currently_syncing", second_sync_bookmarks)
+
+        self.assertIsNone(first_sync_bookmarks.get("currently_syncing"))
+        self.assertIsNone(second_sync_bookmarks.get("currently_syncing"))
+
         for stream in streams_to_test:
             with self.subTest(stream=stream):
+                # Verify at least 1 record was replicated in the second sync
+                self.assertGreater(
+                    second_sync_record_count.get(stream, -1), 0,
+                    msg="The number of records is not over the stream max limit")
 
                 # expected values
                 expected_replication_method = expected_replication_methods[stream]
@@ -98,9 +115,21 @@ class BookmarksTest(IterableBase):
                     # verify the syncs sets a bookmark of the expected form
                     self.assertIsNotNone(first_bookmark_value)
                     self.assertIsNotNone(second_bookmark_value)
+
+                    # verify the sync sets a bookmark is a dict
+                    self.assertIsInstance(first_bookmark_value, dict)
+                    self.assertIsInstance(second_bookmark_value, dict)
+
+                    # verify the sync sets a bookmark value is a string
+                    self.assertIsInstance(first_bookmark_value[replication_key], str)
+                    self.assertIsInstance(second_bookmark_value[replication_key], str)
                     
                     self.assertIsNotNone(first_bookmark_value[replication_key])
                     self.assertIsNotNone(second_bookmark_value[replication_key])
+
+                    # verify bookmark value is in required date format
+                    self.assertIsDateFormat(first_bookmark_value[replication_key], self.BOOKMARK_FOMAT)
+                    self.assertIsDateFormat(second_bookmark_value[replication_key], self.BOOKMARK_FOMAT)
 
                     # verify the 2nd bookmark is equal to 1st sync bookmark
                     self.assertEqual(first_bookmark_value[replication_key],
@@ -137,7 +166,3 @@ class BookmarksTest(IterableBase):
                 else:
                     raise NotImplementedError(
                         "INVALID EXPECTATIONS\t\tSTREAM: {} REPLICATION_METHOD: {}".format(stream, expected_replication_method))
-
-                # Verify at least 1 record was replicated in the second sync
-                self.assertGreater(
-                    second_sync_count, 0, msg="We are not fully testing bookmarking for {}".format(stream))

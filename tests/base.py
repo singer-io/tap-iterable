@@ -21,7 +21,7 @@ class IterableBase(unittest.TestCase):
     OBEYS_START_DATE = "obey-start-date"
     START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z"
     REPLICATION_DATE_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
-    BOOKMARK_FOMAT = "%Y-%m-%dT%H:%M:%S.%f"
+    BOOKMARK_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
     START_DATE = ""
     API_WINDOWS_IN_DAYS = 60
@@ -222,7 +222,7 @@ class IterableBase(unittest.TestCase):
                                                                schema,
                                                                additional_md=additional_md,
                                                                non_selected_fields=non_selected_properties)
-    
+
     @staticmethod
     def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
         """Select all streams and all fields within streams"""
@@ -237,7 +237,7 @@ class IterableBase(unittest.TestCase):
 
             connections.select_catalog_and_fields_via_metadata(
                 conn_id, catalog, schema, [], non_selected_properties)
-            
+
     def perform_and_verify_table_and_field_selection(self,
                                                      conn_id,
                                                      test_catalogs,
@@ -274,7 +274,6 @@ class IterableBase(unittest.TestCase):
                 for field, field_props in catalog_entry.get('annotated-schema').get('properties').items():
                     field_selected = field_props.get('selected')
                     self.assertTrue(field_selected, msg="Field not selected.")
-
 
     def run_and_verify_check_mode(self, conn_id):
         """
@@ -330,7 +329,7 @@ class IterableBase(unittest.TestCase):
         """
         date_stripped = int(time.mktime(dt.strptime(dtime, format).timetuple()))
         return date_stripped
-    
+
     @staticmethod
     def parse_date(date_value):
         """
@@ -383,3 +382,15 @@ class IterableBase(unittest.TestCase):
             stream_to_calculated_state["bookmarks"][stream][replication_key] = calculated_state_formatted
 
         return stream_to_calculated_state
+
+    def assertIsDateFormat(self, value, str_format):
+        """
+        Assertion Method that verifies a string value is a formatted datetime with
+        the specified format.
+        """
+        try:
+            _ = dt.strptime(value, str_format)
+        except ValueError as err:
+            raise AssertionError(
+                f"Value does not conform to expected format: {str_format}"
+            ) from err

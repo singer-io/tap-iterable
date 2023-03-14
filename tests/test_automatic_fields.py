@@ -41,22 +41,20 @@ class AutomaticFieldsTest(IterableBase):
         for stream in streams_to_test:
             with self.subTest(stream=stream):
 
+                # Verify that you get some records for each stream
+                self.assertGreater(
+                    record_count_by_stream.get(stream, -1), 0,
+                    msg="First sync should sync at least 1 record for testing")
+
                 # expected values
                 expected_primary_keys = self.expected_primary_keys()[stream]
                 expected_keys = self.expected_automatic_fields().get(stream)
-
-                expected_keys = expected_keys 
 
                 # collect actual values
                 stream_messages = all_messages.get(stream)
                 record_messages_keys = [set(message['data'].keys())
                                         for message in stream_messages['messages']
                                         if  message['action'] == 'upsert']
-
-                # Verify that you get some records for each stream
-                self.assertGreater(
-                    record_count_by_stream.get(stream, -1), 0,
-                    msg="The number of records is not over the stream max limit")
 
                 # Verify that only the automatic fields are sent to the target
                 for actual_keys in record_messages_keys:
