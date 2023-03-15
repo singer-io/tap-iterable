@@ -6,14 +6,24 @@ spec](https://github.com/singer-io/getting-started/blob/master/SPEC.md).
 
 This tap:
 
-- Pulls raw data from [iterable](https://iterable.com/developers/)
+- Pulls raw data from [iterable](https://api.iterable.com/api/docs)
 - Extracts the following resources:
-  + lists
-  + list_users
   + campaigns
+  + channels
+  + email_bounce
+  + email_click
+  + email_complaint
+  + email_open
+  + email_send_skip
+  + email_send
+  + email_subscribe
+  + email_unsubscribe       
+  + list_users
+  + lists
   + message_types
-  + templates
   + metadata
+  + templates
+  + users  
 - Outputs the schema for each resource
 - Incrementally pulls data based on the input state
 
@@ -32,7 +42,8 @@ $ pip install tap-iterable
 ```json
 {
   "api_key": "xx",
-  "start_date" : "2018-02-22T02:06:58.147Z"
+  "start_date" : "2018-02-22T02:06:58.147Z",
+  "api_window_in_days" : "10"
 }
 ```
 
