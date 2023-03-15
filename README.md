@@ -46,7 +46,7 @@ $ pip install tap-iterable
   "api_window_in_days" : "10"
 }
 ```
-NOTE : In the config file, "api_window_in_days" parameter should be set to an optimum value to improve historical sync performance. Setting this value too low (minimum 1 day) will take longer to complete historical sync and setting it larger may result in request timeouts or memory overflow issues.
+NOTE : In the config file, "api_window_in_days" parameter should be set to an optimum value to improve historical sync performance. Setting this value too low will take longer to complete historical sync and setting it larger may result in request timeouts or memory overflow issues.
 
 4. Run the Tap in Discovery Mode
 
