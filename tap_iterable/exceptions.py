@@ -61,4 +61,5 @@ def raise_for_error(response):
         message_text = json_resp.get("message", ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("message", "Unknown Error"))
         message = "HTTP-error-code: {}, Error: {}".format(error_code, message_text)
         exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", IterableError)
+
         raise exc(message) from None
