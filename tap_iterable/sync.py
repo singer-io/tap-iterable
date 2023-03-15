@@ -25,7 +25,7 @@ def get_selected_streams(catalog):
 def sync(client, catalog, state):
     selected_stream_names = get_selected_streams(catalog)
 
-    for stream in catalog.streams:
+    for stream in catalog.get_selected_streams(state):
         stream_name = stream.tap_stream_id
 
         mdata = metadata.to_map(stream.metadata)
@@ -37,6 +37,8 @@ def sync(client, catalog, state):
         key_properties = metadata.get(mdata, (), 'table-key-properties')
         singer.write_schema(stream_name, stream.schema.to_dict(), key_properties)
         LOGGER.info("%s: Starting sync", stream_name)
+        state = singer.set_currently_syncing(state, stream_name)
+        singer.write_state(state)
         instance = STREAMS[stream_name](client)
         instance.stream = stream
         counter_value = sync_stream(state, instance)
