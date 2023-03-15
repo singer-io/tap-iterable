@@ -10,6 +10,30 @@
         "string"
       ]
     },
+    "bounceMessage": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "eventName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "recipientState": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "status": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "createdAt": {
       "type": [
         "null",
@@ -56,7 +80,12 @@
         "null",
         "array"
       ],
-      "items": {}
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      }
     },
     "workflowId": {
       "type": [
