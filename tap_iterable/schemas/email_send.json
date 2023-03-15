@@ -17,6 +17,30 @@
         "integer"
       ]
     },
+    "catalogCollectionCount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "catalogLookupCount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "espName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "productRecommendationCount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
     "itblInternal": {
       "type": [
         "null",

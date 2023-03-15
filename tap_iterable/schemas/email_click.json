@@ -110,6 +110,12 @@
         "null",
         "string"
       ]
+    },
+    "eventName": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

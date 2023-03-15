@@ -1,3 +1,4 @@
+# pylint: disable=E1101
 #
 # Module dependencies.
 #
@@ -11,28 +12,17 @@ import time
 import tempfile
 from singer import metadata
 from singer import utils
-from singer.metrics import Point
 from dateutil.parser import parse
 from tap_iterable.context import Context
+import tap_iterable.helper as helper
 
 
-logger = singer.get_logger()
+LOGGER = singer.get_logger()
 KEY_PROPERTIES = ['id']
 
 
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
-
-
-def epoch_to_datetime_string(milliseconds):
-    datetime_string = None
-    try:
-        datetime_string = time.strftime("%Y-%m-%d %H:%M:%S %Z", time.localtime(milliseconds / 1000))
-    except TypeError:
-        # If fails, it means format already datetime string.
-        datetime_string = milliseconds
-        pass
-    return datetime_string
 
 
 class Stream():
@@ -52,13 +42,13 @@ class Stream():
         if self.session_bookmark is None:
             return True
         # Assume value is in epoch milliseconds.
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         return utils.strptime_with_tz(value_in_date_time) > utils.strptime_with_tz(self.session_bookmark)
 
 
     def update_session_bookmark(self, value):
         # Assume value is epoch milliseconds.
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         if self.is_session_bookmark_old(value_in_date_time):
             self.session_bookmark = value_in_date_time
 
@@ -74,16 +64,16 @@ class Stream():
         name = self.name if not name else name
         # when `value` is None, it means to set the bookmark to None
         # Assume value is epoch time
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         if value_in_date_time is None or self.is_bookmark_old(state, value_in_date_time, name):
-            singer.write_bookmark(state, name, self.replication_key, value_in_date_time)
+            singer.write_bookmark(state, name, self.replication_key, utils.strftime(utils.strptime_to_utc(value_in_date_time)))
 
 
     def is_bookmark_old(self, state, value, name=None):
         # Assume value is epoch time.
-        value_in_date_time = epoch_to_datetime_string(value)
+        value_in_date_time = helper.epoch_to_datetime_string(value)
         current_bookmark = self.get_bookmark(state, name)
-        return utils.strptime_with_tz(value_in_date_time) > utils.strptime_with_tz(current_bookmark)
+        return utils.strptime_with_tz(value_in_date_time) >= utils.strptime_with_tz(current_bookmark)
 
 
     def load_schema(self):
@@ -93,11 +83,16 @@ class Stream():
         return schema
 
 
-    def load_metadata(self):
-        return metadata.get_standard_metadata(schema=self.load_schema(),
-                                              key_properties=self.key_properties,
-                                              valid_replication_keys=[self.replication_key],
-                                              replication_method=self.replication_method)
+    def load_metadata(self, schema):
+        stream_metadata = metadata.get_standard_metadata(**{"schema": schema,
+                                        "key_properties": self.key_properties,
+                                        "valid_replication_keys": [self.replication_key],
+                                        "replication_method": self.replication_method})
+        stream_metadata = metadata.to_map(stream_metadata)
+        if self.replication_key is not None:
+            stream_metadata = metadata.write(stream_metadata, ("properties", self.replication_key), "inclusion", "automatic")
+        stream_metadata = metadata.to_list(stream_metadata)
+        return stream_metadata
 
 
     # The main sync function.
@@ -111,6 +106,8 @@ class Stream():
             for item in res:
                 self.update_session_bookmark(item[self.replication_key])
                 yield (self.stream, item)
+            if not self.session_bookmark and bookmark:
+                self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)
 
         else:
@@ -132,8 +129,12 @@ class Stream():
                         tf.write(item)
                         count += 1
                         tf.write(b'\n')
+                # Fix for TDL-22208
+                # The expected records were getting added to temp file but observing empty file while reading
+                # Hence, added below line to move file pointer to the beginning of a file 
+                tf.seek(0)
                 write_time = time.time()
-                logger.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
+                LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
                 with open(tf.name, 'r', encoding='utf-8') as tf_reader:
                     for line in tf_reader:
                         # json load line with line feed removed, but
@@ -149,8 +150,10 @@ class Stream():
                             pass
                         self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
                         yield (self.stream, rec)
-                logger.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
+                LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
+            if not self.session_bookmark and bookmark :
+                self.session_bookmark = bookmark 
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
 
@@ -163,7 +166,7 @@ class Lists(Stream):
 class ListUsers(Stream):
     name = "list_users"
     replication_method = "FULL_TABLE"
-    key_properties = []
+    key_properties = ["email", "listId"]
 
 
 class Campaigns(Stream):
@@ -286,8 +289,8 @@ class EmailUnsubscribe(Stream):
 class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
-    key_properties = []
-    replication_key = "createdAt"
+    key_properties = ["email"]
+    replication_key = "profileUpdatedAt"
     data_type_name = "user"
 
     def sync(self, state):
