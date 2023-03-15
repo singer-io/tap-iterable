@@ -43,7 +43,6 @@ def sync(client, catalog, state):
         instance.stream = stream
         counter_value = sync_stream(state, instance)
         LOGGER.info("%s: Completed sync (%s rows)", stream_name, counter_value)
-        singer.write_state(state)
     state = singer.set_currently_syncing(state, None)
     singer.write_state(state)
     LOGGER.info("Finished sync")
