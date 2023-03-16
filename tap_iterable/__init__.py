@@ -18,8 +18,7 @@ LOGGER = singer.get_logger()
 
 REQUIRED_CONFIG_KEYS = [
     "api_key",
-    "start_date",
-    "api_window_in_days"
+    "start_date"
 ]
 
 
@@ -36,9 +35,11 @@ def main():
 
     creds = {
         "start_date": parsed_args.config['start_date'],
-        "api_key": parsed_args.config['api_key'],
-        "api_window_in_days": parsed_args.config['api_window_in_days']
+        "api_key": parsed_args.config['api_key']
     }
+
+    if "api_window_in_days" in parsed_args.config.keys():
+        creds["api_window_in_days"] = parsed_args.config['api_window_in_days']
 
     client = Iterable(**creds)
     Context.config = parsed_args.config
