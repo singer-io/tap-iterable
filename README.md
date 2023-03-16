@@ -43,7 +43,7 @@ $ pip install tap-iterable
 {
   "api_key": "xx",
   "start_date" : "2018-02-22T02:06:58.147Z",
-  "api_window_in_days" : "10"
+  "api_window_in_days" : "10"       # optional field with default value "30"
 }
 ```
 NOTE : In the config file, "api_window_in_days" parameter should be set to an optimum value to improve historical sync performance. Setting this value too low will take longer to complete historical sync and setting it larger may result in request timeouts or memory overflow issues.
