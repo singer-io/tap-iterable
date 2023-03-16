@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.1
+  * Made API window in days as not required in config [25](https://github.com/singer-io/tap-iterable/pull/25)
+
 ## 1.0.0
   * Beta release changes [#23](https://github.com/singer-io/tap-iterable/pull/23)
     * Discovery and API request fixes [#20](https://github.com/singer-io/tap-iterable/pull/20)
