@@ -415,18 +415,6 @@
         "boolean"
       ]
     },
-    "offers.Intro APR": {
-      "type": [
-        "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "integer"
-        ]
-      }
-    },
     "streetAddress": {
       "type": [
         "null",
@@ -749,12 +737,6 @@
       "type": [
         "null",
         "boolean"
-      ]
-    },
-    "Industry": {
-      "type": [
-        "null",
-        "string"
       ]
     },
     "highestBidPrice": {
