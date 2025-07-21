@@ -3,21 +3,21 @@ from setuptools import setup
 
 setup(
     name="tap-iterable",
-    version="1.0.1",
+    version="1.0.2",
     description="Singer.io tap for extracting Iterable data",
     author="Stitch",
     url="http://github.com/singer-io/tap-iterable",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_iterable"],
     install_requires=[
-        "singer-python==5.13.0",
-        "requests==2.20.0"
+        "singer-python==5.13.2",
+        "requests==2.32.4"
     ],
     extras_require={
         'dev': [
             'pylint',
             'ipdb',
-            'requests==2.20.0'
+            'requests==2.32.4'
         ]
     },
     entry_points="""
