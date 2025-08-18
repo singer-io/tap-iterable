@@ -60,4 +60,4 @@ class TestBackoff(unittest.TestCase):
             e.exception), f"HTTP-error-code: {mock_error_code}, Error: {expected_error_message}")
 
         # Verify the call count for each error.
-        self.assertEquals(mock_get.call_count, mock_expected_call_count)
+        self.assertEqual(mock_get.call_count, mock_expected_call_count)

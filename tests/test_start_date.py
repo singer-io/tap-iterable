@@ -143,5 +143,5 @@ class StartDateTest(IterableBase):
                         self.assertGreaterEqual(replication_key_value, expected_start_date_2)
 
                 else:
-                    self.assertEquals(record_count_sync_1, record_count_sync_1,
+                    self.assertEqual(Record_count_sync_1, record_count_sync_1,
                                       msg="FULL_TABLE streams should extract less records for later start date.")
