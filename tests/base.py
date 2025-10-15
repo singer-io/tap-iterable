@@ -24,6 +24,7 @@ class IterableBase(unittest.TestCase):
     START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z"
     REPLICATION_DATE_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
     BOOKMARK_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+    EXPECTED_PARENT_STREAM = "expected-parent-stream"
 
     START_DATE = ""
     API_WINDOWS_IN_DAYS = 60
@@ -142,7 +143,8 @@ class IterableBase(unittest.TestCase):
             "list_users": {
                 self.PRIMARY_KEYS: {"email", "listId"},
                 self.REPLICATION_METHOD: self.FULL_TABLE,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
+                self.EXPECTED_PARENT_STREAM: "lists",
             },
             "message_types": {
                 self.PRIMARY_KEYS: {"id"},
