@@ -24,6 +24,7 @@ class IterableBase(unittest.TestCase):
     START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z"
     REPLICATION_DATE_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
     BOOKMARK_FOMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+    PARENT_TAP_STREAM_ID = "parent-tap-stream-id"
     EXPECTED_PARENT_STREAM = "expected-parent-stream"
 
     START_DATE = ""

@@ -80,7 +80,7 @@ class IterableDiscoveryTest(IterableBase):
                 ).get(self.REPLICATION_METHOD)
                 
                 # Get parent-tap-stream-id if present
-                actual_parent_stream_id = stream_properties[0].get("metadata", {}).get("parent-tap-stream-id")
+                actual_parent_stream_id = stream_properties[0].get("metadata", {}).get(self.PARENT_TAP_STREAM_ID)
                 
                 expected_parent_stream_id = self.expected_metadata()[stream].get(self.EXPECTED_PARENT_STREAM)
 
@@ -120,13 +120,13 @@ class IterableDiscoveryTest(IterableBase):
                     self.assertEqual(
                         expected_parent_stream_id,
                         actual_parent_stream_id,
-                        msg=f"expected parent-tap-stream-id is {expected_parent_stream_id}"
-                            f"but actual parent-tap-stream-id is {actual_parent_stream_id}"
+                        msg=f"expected {self.PARENT_TAP_STREAM_ID} is {expected_parent_stream_id}"
+                            f"but actual {self.PARENT_TAP_STREAM_ID} is {actual_parent_stream_id}"
                     )
                 else:
                     self.assertIsNone(
                         actual_parent_stream_id,
-                        msg=f"parent-tap-stream-id should be None for parent stream {stream}"
+                        msg=f"{self.PARENT_TAP_STREAM_ID} should be None for parent stream {stream}"
                         f" but got {actual_parent_stream_id}"
                     )
 
