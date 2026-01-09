@@ -43,11 +43,12 @@ class Iterable(object):
     else:
       yield strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
 
-  @backoff.on_exception(backoff.constant,
+  @backoff.on_exception(backoff.expo,
                         (IterableRateLimitError, IterableNotAvailableError),
+                        max_tries=7,
                         jitter=None,
-                        interval=30,
-                        max_tries=5)
+                        base=2,
+                        factor=2)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
     uri = "{uri}{path}".format(uri=self.uri, path=path)
