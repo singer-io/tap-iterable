@@ -196,7 +196,7 @@ class Templates(Stream):
     name = "templates"
     replication_method = "INCREMENTAL"
     replication_key = "updatedAt"
-    key_properties = [ "templateId" ]
+    key_properties = ["templateId"]
 
 
 class Metadata(Stream):
