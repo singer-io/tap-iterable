@@ -7,9 +7,6 @@ class AllFieldsTest(IterableBase):
 
 	# Skipping fields since we were not able to genrate test data for following fields in the streams
     MISSING_FILEDS = {
-        "templates": {
-            "campaignId"
-        },
         "email_subscribe": {
             "itblInternal",
             "workflowId"
