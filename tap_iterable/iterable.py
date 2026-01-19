@@ -146,12 +146,6 @@ class Iterable(object):
 
     # ################################ Template API Issue WORKAROUND #################################
     # We are moving with pseudo-incremental logic here to avoid missing out records due to API limitations.
-    # ## Approach:
-    # 1) Get the bookmark value from state.
-    # 2) Fetch all records from the API without passing any bookmark/startDateTime filter. Basic FULL_TABLE logic.
-    # 3) For each record fetched, check the record's updatedAt value with bookmark value from state.
-    # 4) If record's updatedAt >= bookmark value from state, yield the record
-    # 5) Save the max updatedAt value from the fetched records as new bookmark in state.
 
     # Reason for the workaround:
     # -------------------------
