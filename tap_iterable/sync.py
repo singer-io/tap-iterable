@@ -55,7 +55,6 @@ def sync_stream(state, instance):
     with metrics.record_counter(stream.tap_stream_id) as counter:
         for (stream, record) in instance.sync(state):
             counter.increment()
-            LOGGER.info(f" Record: {record}\n\n")
 
             with Transformer(integer_datetime_fmt="unix-milliseconds-integer-datetime-parsing") as transformer:
                 record = transformer.transform(record, stream.schema.to_dict(), metadata.to_map(stream.metadata))
