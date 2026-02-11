@@ -55,11 +55,11 @@ def sync_stream(state, instance):
     with metrics.record_counter(stream.tap_stream_id) as counter:
         for (stream, record) in instance.sync(state):
             counter.increment()
+            if stream.tap_stream_id == "users":  # Specific check for users as it is causing validation issues
+                record = transform_case_sensitive_fields(record=record)
 
             with Transformer(integer_datetime_fmt="unix-milliseconds-integer-datetime-parsing") as transformer:
                 record = transformer.transform(record, stream.schema.to_dict(), metadata.to_map(stream.metadata))
-                if stream.tap_stream_id == "users":  # Specific check for users as it is causing validation issues
-                    record = transform_case_sensitive_fields(record=record)
                 singer.write_record(stream.tap_stream_id, record)
 
         if instance.replication_method == "INCREMENTAL":
