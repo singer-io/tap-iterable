@@ -230,8 +230,11 @@ class AllFieldsTest(IterableBase):
             "locale",
             "auctionDigest.auctionInfo",
             "newListedVehicles",
+
+            "_offers.intro APR",
+            "_industry"
 		},
-        
+
     }
 
     def name(self):
