@@ -397,7 +397,7 @@
         "boolean"
       ]
     },
-    "offers.Intro APR": {
+    "offers.intro APR": {
       "type": [
         "null",
         "array"
@@ -721,7 +721,7 @@
         "boolean"
       ]
     },
-    "Industry": {
+    "industry": {
       "type": [
         "null",
         "string"

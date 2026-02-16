@@ -5,8 +5,8 @@ import pytz
 
 CASE_SENSITIVE_FIELD_MAP = {
     # Conflicting field --> Field with `_` as a prefix
-    "industry": "_industry",
-    "offers.intro APR": "_offers.intro APR",
+    "Industry": "_industry",
+    "offers.Intro APR": "_offers.intro APR",
 }
 
 
