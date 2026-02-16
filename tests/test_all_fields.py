@@ -137,7 +137,6 @@ class AllFieldsTest(IterableBase):
             "shoppingCartItems.imageUrl",
             "swingTrader_subscription",
             "badgeCount",
-            "Industry",
             "recommendedVehicles",
             "totalOrders",
             "readingList.avgRating",
@@ -193,7 +192,6 @@ class AllFieldsTest(IterableBase):
             "favoriteCuisine",
             "readingList.bookAuthor",
             "is_active",
-            "offers.Intro APR",
             "loyalty_points",
             "jobRecommendations",
             "recommendedVehicles.name",
@@ -230,8 +228,11 @@ class AllFieldsTest(IterableBase):
             "locale",
             "auctionDigest.auctionInfo",
             "newListedVehicles",
+
+            "_offers.intro APR",
+            "_industry"
 		},
-        
+
     }
 
     def name(self):

@@ -1,6 +1,13 @@
 import datetime
+from typing import Dict
 
 import pytz
+
+CASE_SENSITIVE_FIELD_MAP = {
+    # Conflicting field --> Field with `_` as a prefix
+    "Industry": "_industry",
+    "offers.Intro APR": "_offers.intro APR",
+}
 
 
 def epoch_to_datetime_string(milliseconds):
@@ -13,3 +20,12 @@ def epoch_to_datetime_string(milliseconds):
         # If fails, it means format already datetime string.
         datetime_string = milliseconds
     return datetime_string
+
+
+def transform_case_sensitive_fields(record: Dict) -> Dict:
+    """Function to transform case-sensitive fields to be prefixed with `_`."""
+
+    for field in CASE_SENSITIVE_FIELD_MAP:
+        if field in record:
+            record[CASE_SENSITIVE_FIELD_MAP[field]] = record.pop(field)
+    return record

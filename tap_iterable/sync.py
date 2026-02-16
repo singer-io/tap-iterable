@@ -7,6 +7,7 @@ import singer
 import singer.metrics as metrics
 from singer import metadata
 from singer import Transformer
+from tap_iterable.helper import transform_case_sensitive_fields
 from tap_iterable.streams import STREAMS
 
 LOGGER = singer.get_logger()
@@ -54,6 +55,8 @@ def sync_stream(state, instance):
     with metrics.record_counter(stream.tap_stream_id) as counter:
         for (stream, record) in instance.sync(state):
             counter.increment()
+            if stream.tap_stream_id == "users":  # Specific check for users as it is causing validation issues
+                record = transform_case_sensitive_fields(record=record)
 
             with Transformer(integer_datetime_fmt="unix-milliseconds-integer-datetime-parsing") as transformer:
                 record = transformer.transform(record, stream.schema.to_dict(), metadata.to_map(stream.metadata))
