@@ -27,6 +27,9 @@ This tap:
 - Outputs the schema for each resource
 - Incrementally pulls data based on the input state
 
+#### Note for `users` stream with case-sensitive fields in their data:
+-  Fields that result in case-sensitive collisions will be handled by prefixing an underscore `_` to the uppercase field name.
+
 ## Quick Start
 
 1. Install
