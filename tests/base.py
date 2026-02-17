@@ -31,7 +31,7 @@ class IterableBase(unittest.TestCase):
     API_WINDOWS_IN_DAYS = 60
 
     # Skipping streams from testing because we were unable to generate test data
-    MISSING_DATA_STREAMS = {"metadata", "email_send_skip", "email_complaint", "email_click"}
+    MISSING_DATA_STREAMS = {"metadata", "email_send_skip", "email_complaint", "email_click", "email_bounce"}
 
     def tap_name(self):
         return "tap-iterable"
@@ -60,7 +60,7 @@ class IterableBase(unittest.TestCase):
         Setting required properties as environment variables.
         """
         return_value = {
-            'start_date':'2023-01-25T00:00:00Z',
+            'start_date':'2023-01-24T00:00:00Z',
             'api_key':os.getenv('ITERABLE_API_KEY'),
             "api_window_in_days": 30
         }
@@ -451,7 +451,7 @@ class IterableBase(unittest.TestCase):
             days, hours, minutes = timedelta_by_stream[stream]
             calculated_state_as_datetime = state_as_datetime - timedelta(days=days, hours=hours, minutes=minutes)
 
-            state_format = "%Y-%m-%dT00:00:00Z"
+            state_format = "%Y-%m-%dT%H:%M:%SZ"
             calculated_state_formatted = dt.strftime(calculated_state_as_datetime, state_format)
 
             stream_to_calculated_state["bookmarks"][stream][replication_key] = calculated_state_formatted

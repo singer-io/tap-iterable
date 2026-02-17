@@ -43,11 +43,12 @@ class Iterable(object):
     else:
       yield strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
 
-  @backoff.on_exception(backoff.constant,
+  @backoff.on_exception(backoff.expo,
                         (IterableRateLimitError, IterableNotAvailableError),
+                        max_tries=7,
                         jitter=None,
-                        interval=30,
-                        max_tries=5)
+                        base=2,
+                        factor=2)
   def _get(self, path, stream=True, **kwargs):
     """ The actual `get` request.  """
     uri = "{uri}{path}".format(uri=self.uri, path=path)
@@ -141,17 +142,29 @@ class Iterable(object):
     ]
     # `templates` API bug where it doesn't extract the records 
     #  where `startDateTime`= 2023-03-01+07%3A31%3A15 though record exists
-    #  hence, substracting one second so that we could extract atleast one record 
-    bookmark_val = strptime_with_tz(bookmark) - timedelta(seconds=1)
+    #  hence, substracting one second so that we could extract atleast one record
+
+    # ################################ Template API Issue WORKAROUND #################################
+    # We are moving with pseudo-incremental logic here to avoid missing out records due to API limitations.
+
+    # Reason for the workaround:
+    # -------------------------
+    # Iterable’s Templates API is not designed to support update-based incremental syncs.
+    # While it does have an updatedAt field, the API does not allow filtering based on it.
+    # Using updatedAt as a bookmark key will have a possibility of missing out records as API will always filter on createdAt.
+    # Even very old records if updated recently will be missed out as createdAt will always be old and we are never passing that created on to API.
+
+    ########################################################################################
+
+    bookmark_val = strptime_with_tz(bookmark)
     bookmark = strftime(bookmark_val)
     for template_type in template_types:
       for medium in message_mediums:
-        for kwargs in self.get_start_end_date(bookmark):
-          res = self.get("templates", templateTypes=template_type, messageMedium=medium, **kwargs)
-          for t in res["templates"]:
-            rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(t[column_name]))
-            if rec_date_time >= bookmark_val:
-              yield t
+        res = self.get("templates", templateType=template_type, messageMedium=medium)
+        for t in res["templates"]:
+          rec_date_time = strptime_with_tz(helper.epoch_to_datetime_string(t[column_name]))
+          if rec_date_time >= bookmark_val:
+            yield t
 
 
   def metadata(self, column_name=None, bookmark=None):
@@ -182,4 +195,3 @@ class Iterable(object):
       def get_data():
         return self._get("export/data.json", dataTypeName=data_type_name, **kwargs), kwargs['endDateTime']
       yield get_data
-   

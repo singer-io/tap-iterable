@@ -10,14 +10,13 @@ setup(
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_iterable"],
     install_requires=[
-        "singer-python==5.13.2",
-        "requests==2.32.4"
+        "singer-python==6.3.0",
+        "requests==2.32.5"
     ],
     extras_require={
         'dev': [
             'pylint',
-            'ipdb',
-            'requests==2.32.4'
+            'ipdb'
         ]
     },
     entry_points="""

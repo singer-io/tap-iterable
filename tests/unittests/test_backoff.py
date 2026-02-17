@@ -41,9 +41,9 @@ class TestBackoff(unittest.TestCase):
     @parameterized.expand([
         [400, IterableBadRequestError, 1, "A validation exception has occurred."],
         [401, IterableUnauthorizedError, 1, "Invalid authorization credentials."],
-        [429, IterableRateLimitError, 5,
+        [429, IterableRateLimitError, 7,
             "The API rate limit for your organisation/application pairing has been exceeded."],
-        [503, IterableNotAvailableError, 5, "API service is currently unavailable."],
+        [503, IterableNotAvailableError, 7, "API service is currently unavailable."],
     ])
     @mock.patch("time.sleep")
     @mock.patch("requests.get")

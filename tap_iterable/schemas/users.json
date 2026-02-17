@@ -4,12 +4,6 @@
     "object"
   ],
   "properties": {
-    "industry": {
-      "type": [
-        "null",
-        "string"
-      ]
-    },
     "university_interest": {
       "type": [
         "null",
@@ -252,14 +246,8 @@
     "invoice.customSubTotal": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "integer"
-        ]
-      }
+        "integer"
+      ]
     },
     "zip": {
       "type": [
@@ -382,14 +370,8 @@
     "invoice.invoiceDate": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "string"
-        ]
-      }
+        "string"
+      ]
     },
     "state": {
       "type": [
@@ -415,7 +397,7 @@
         "boolean"
       ]
     },
-    "offers.Intro APR": {
+    "offers.intro APR": {
       "type": [
         "null",
         "array"
@@ -528,14 +510,8 @@
     "invoice.customerEmail": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "string"
-        ]
-      }
+        "string"
+      ]
     },
     "marketSmith_subscription": {
       "type": [
@@ -618,14 +594,8 @@
     "invoice.customerName": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "string"
-        ]
-      }
+        "string"
+      ]
     },
     "vegetarian_menu.featured_item_availability": {
       "type": [
@@ -751,7 +721,7 @@
         "boolean"
       ]
     },
-    "Industry": {
+    "industry": {
       "type": [
         "null",
         "string"
@@ -869,8 +839,14 @@
     "merchantId": {
       "type": [
         "null",
-        "integer"
-      ]
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "integer"
+        ]
+      }
     },
     "favoriteShowCategories": {
       "type": [
@@ -1020,26 +996,8 @@
     "invoice.customAmount": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "integer"
-        ]
-      }
-    },
-    "offers.intro APR": {
-      "type": [
-        "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "integer"
-        ]
-      }
+        "integer"
+      ]
     },
     "offers.quantity": {
       "type": [
@@ -1182,8 +1140,14 @@
     "selected_games": {
       "type": [
         "null",
-        "string"
-      ]
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
     },
     "shoppingCartItems.sku": {
       "type": [
@@ -1248,14 +1212,8 @@
     "invoice.merchantName": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "string"
-        ]
-      }
+        "string"
+      ]
     },
     "hasMobileApp": {
       "type": [
@@ -1501,14 +1459,8 @@
     "invoice.invoiceNumber": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "string"
-        ]
-      }
+        "string"
+      ]
     },
     "congressional Districts": {
       "type": [
@@ -1595,14 +1547,8 @@
     "invoice.totalDue": {
       "type": [
         "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "null",
-          "integer"
-        ]
-      }
+        "integer"
+      ]
     },
     "auctionDigest.auctionHouse": {
       "type": [
@@ -1830,6 +1776,24 @@
         "type": [
           "null",
           "string"
+        ]
+      }
+    },
+    "_industry": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "_offers.intro APR": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "integer"
         ]
       }
     }

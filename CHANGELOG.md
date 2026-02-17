@@ -1,7 +1,8 @@
 # Changelog
 
 ## 1.1.0
-  * Adds parent-tap-stream-id field to catalog for child streams [#30](https://github.com/singer-io/tap-iterable/pull/30) 
+  * Fix bookmarking issue in template stream and integration tests by improving backoff strategy [#31](https://github.com/singer-io/tap-iterable/pull/31)
+  * Adds parent-tap-stream-id field to catalog for child streams [#30](https://github.com/singer-io/tap-iterable/pull/30)
 
 ## 1.0.2
 * Dependency upgrades [#28](https://github.com/singer-io/tap-iterable/pull/28)
