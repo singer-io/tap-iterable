@@ -38,7 +38,7 @@ class TestGenericServer5xxError(unittest.TestCase):
 
     """
     Test Error handling for Generic 5xx errors that are not specifically mapped.
-    This includes errors like 502, 504, 505, etc. that should be treated as IterableServer5xxError.
+    This includes errors like 502, 505, etc. that should be treated as IterableServer5xxError.
     """
 
     def setUp(self):
@@ -47,7 +47,6 @@ class TestGenericServer5xxError(unittest.TestCase):
     @parameterized.expand([
         [501, "Not Implemented"],
         [502, "Bad Gateway"],
-        [504, "Gateway Timeout"],
         [505, "HTTP Version Not Supported"],
         [506, "Variant Also Negotiates"],
         [507, "Insufficient Storage"],
@@ -77,7 +76,6 @@ class TestGenericServer5xxError(unittest.TestCase):
 
     @parameterized.expand([
         [502, {"message": "Bad Gateway Error"}],
-        [504, {"message": "Gateway Timeout Error"}],
         [505, {"message": "Custom 5xx Error Message"}],
     ])
     @mock.patch("time.sleep")
@@ -109,7 +107,8 @@ class TestGenericServer5xxError(unittest.TestCase):
             self.iterable_object._get("dummy-path")
 
         # Verifying the error is raised correctly
-        self.assertIn("HTTP-error-code: 504", str(e.exception))
+        expected_message = "HTTP-error-code: 504, Error: Iterable Gateway Timeout Error"
+        self.assertEqual(str(e.exception), expected_message)
 
         # Verify retry count
         self.assertEqual(mock_get.call_count, 7)
@@ -118,7 +117,7 @@ class TestGenericServer5xxError(unittest.TestCase):
     @mock.patch("requests.get")
     def test_generic_5xx_not_503(self, mock_get, mock_sleep):
         """
-        Test that generic 5xx errors (e.g., 502, 504) are different from 503
+        Test that generic 5xx errors (e.g., 502, 505) are different from 503
         which is specifically mapped to IterableNotAvailableError.
         """
         # Test with 502 error

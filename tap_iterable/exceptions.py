@@ -44,7 +44,11 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     503: {
         "raise_exception": IterableNotAvailableError,
         "message": "API service is currently unavailable."
-    }
+    },
+    504: {
+        "raise_exception": IterableServer5xxError,
+        "message": "Iterable Gateway Timeout Error"
+    },
 }
 
 
@@ -62,8 +66,7 @@ def raise_for_error(response):
         message = "HTTP-error-code: {}, Error: {}".format(error_code, message_text)
         exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", IterableError)
 
-        # We have observed that iterable returns 504 error code as well.
-        # So generic handling for 5xx error codes which are not in the mapping to be treated as server error.
+        # Generic handling of 5xx error codes
         if error_code > 500 and error_code not in ERROR_CODE_EXCEPTION_MAPPING.keys():
             exc = IterableServer5xxError
 
