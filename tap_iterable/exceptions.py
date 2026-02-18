@@ -28,7 +28,6 @@ class IterableNotAvailableError(IterableServer5xxError):
     pass
 
 
-
 ERROR_CODE_EXCEPTION_MAPPING = {
     400: {
         "raise_exception": IterableBadRequestError,
@@ -45,10 +44,15 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     503: {
         "raise_exception": IterableNotAvailableError,
         "message": "API service is currently unavailable."
-    }
+    },
+    504: {
+        "raise_exception": IterableServer5xxError,
+        "message": "Iterable Gateway Timeout Error"
+    },
 }
 
-def raise_for_error(response):   
+
+def raise_for_error(response):
     try:
         response.raise_for_status()
     except requests.HTTPError:
@@ -61,5 +65,9 @@ def raise_for_error(response):
         message_text = json_resp.get("message", ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("message", "Unknown Error"))
         message = "HTTP-error-code: {}, Error: {}".format(error_code, message_text)
         exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", IterableError)
+
+        # Generic handling of 5xx error codes
+        if error_code > 500 and error_code not in ERROR_CODE_EXCEPTION_MAPPING.keys():
+            exc = IterableServer5xxError
 
         raise exc(message) from None

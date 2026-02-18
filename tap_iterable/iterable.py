@@ -10,7 +10,7 @@ import backoff
 import requests
 import logging
 import tap_iterable.helper as helper
-from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, \
+from tap_iterable.exceptions import IterableRateLimitError, IterableNotAvailableError, IterableServer5xxError, \
   raise_for_error
 
 LOGGER = logging.getLogger()
@@ -44,7 +44,7 @@ class Iterable(object):
       yield strptime_with_tz(start_date).strftime("%Y-%m-%d %H:%M:%S")
 
   @backoff.on_exception(backoff.expo,
-                        (IterableRateLimitError, IterableNotAvailableError),
+                        (IterableRateLimitError, IterableNotAvailableError, IterableServer5xxError),
                         max_tries=7,
                         jitter=None,
                         base=2,
