@@ -80,6 +80,13 @@ class Iterable(object):
     return self.get("users/getFields")
 
 
+  def check_api_credentials(self):
+    """Checks if the provided API credentials are valid by making a test request."""
+    LOGGER.info("Checking API credentials")
+    self.get("channels", limit=1)
+    LOGGER.info("API credentials are valid")
+
+
   #
   # Methods to retrieve data per stream/resource.
   #

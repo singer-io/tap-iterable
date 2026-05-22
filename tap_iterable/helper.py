@@ -22,7 +22,7 @@ def epoch_to_datetime_string(milliseconds):
     return datetime_string
 
 
-def transform_case_sensitive_fields(record: Dict) -> Dict:
+def transform_case_sensitive_fields(record):
     """Function to transform case-sensitive fields to be prefixed with `_`."""
 
     for field in CASE_SENSITIVE_FIELD_MAP:
