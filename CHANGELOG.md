@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0
+  * Fix bookmarking issue in template stream and integration tests by improving backoff strategy [#31](https://github.com/singer-io/tap-iterable/pull/31)
+  * Add logic for 5xx retry to handle server 5xx errors retries [#33](https://github.com/singer-io/tap-iterable/pull/33)
+  * Adds parent-tap-stream-id field to catalog for child streams [#30](https://github.com/singer-io/tap-iterable/pull/30)
+
 ## 1.0.2
 * Dependency upgrades [#28](https://github.com/singer-io/tap-iterable/pull/28)
 

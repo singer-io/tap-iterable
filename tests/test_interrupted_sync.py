@@ -78,16 +78,13 @@ class InterruptedSyncTest(IterableBase):
             "currently_syncing": "email_open",
             "bookmarks": {
                 "campaigns": {
-                    "updatedAt": "2023-03-02 10:18:55.000000Z"
-                },
-                "templates": {
-                    "updatedAt": "2023-02-22 07:31:15.000000Z"
+                    "updatedAt": "2025-03-02T10:18:55.000000Z"
                 },
                 "email_bounce": {
-                    "createdAt": "2023-03-01 10:58:00.000000Z"
+                    "createdAt": "2025-03-01T10:58:00.000000Z"
                 },
                 "email_open": {
-                    "createdAt": "2023-02-22 7:43:31.000000Z"
+                    "createdAt": "2025-02-22T07:43:31.000000Z"
                 }
             }
         }

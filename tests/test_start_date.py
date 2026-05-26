@@ -26,8 +26,8 @@ class StartDateTest(IterableBase):
         """
 
         self.start_date_1 = self.get_properties()
-        self.start_date_2 = '2023-02-20T00:00:00Z'
-        self.START_DATE = self.start_date_1
+        self.start_date_2 = '2024-02-20T00:00:00Z'
+        self.START_DATE = self.start_date_1['start_date']
 
         ##########################################################################
         ### First Sync
@@ -51,7 +51,6 @@ class StartDateTest(IterableBase):
         # run initial sync
         record_count_by_stream_1 = self.run_and_verify_sync(conn_id_1)
         synced_records_1 = runner.get_records_from_target_output()
-
         # Verify that you get some records for each stream
         for stream in streams_to_test:
             with self.subTest(stream=stream):

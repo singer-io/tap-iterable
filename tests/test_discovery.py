@@ -78,6 +78,11 @@ class IterableDiscoveryTest(IterableBase):
                     "metadata",
                     {self.REPLICATION_METHOD: set()}
                 ).get(self.REPLICATION_METHOD)
+                
+                # Get parent-tap-stream-id if present
+                actual_parent_stream_id = stream_properties[0].get("metadata", {}).get(self.PARENT_TAP_STREAM_ID)
+                
+                expected_parent_stream_id = self.expected_metadata()[stream].get(self.EXPECTED_PARENT_STREAM)
 
                 ##########################################################################
                 # Metadata Assertions
@@ -109,6 +114,21 @@ class IterableDiscoveryTest(IterableBase):
 
                 # Verify the replication method matches our expectations
                 self.assertEqual(expected_replication_method, actual_replication_method)
+
+                # verify parent-tap-stream-id for child streams
+                if expected_parent_stream_id:
+                    self.assertEqual(
+                        expected_parent_stream_id,
+                        actual_parent_stream_id,
+                        msg=f"expected {self.PARENT_TAP_STREAM_ID} is {expected_parent_stream_id}"
+                            f"but actual {self.PARENT_TAP_STREAM_ID} is {actual_parent_stream_id}"
+                    )
+                else:
+                    self.assertIsNone(
+                        actual_parent_stream_id,
+                        msg=f"{self.PARENT_TAP_STREAM_ID} should be None for parent stream {stream}"
+                        f" but got {actual_parent_stream_id}"
+                    )
 
                 # Verify that primary keys and replication keys
                 # are given the inclusion of automatic in metadata.

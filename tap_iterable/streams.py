@@ -91,6 +91,12 @@ class Stream():
         stream_metadata = metadata.to_map(stream_metadata)
         if self.replication_key is not None:
             stream_metadata = metadata.write(stream_metadata, ("properties", self.replication_key), "inclusion", "automatic")
+        
+        # Check if the stream has any parent attribute
+        parent_attribute = getattr(self, "parent", None)
+        if parent_attribute:
+            stream_metadata = metadata.write(stream_metadata, (), "parent-tap-stream-id", parent_attribute)
+        
         stream_metadata = metadata.to_list(stream_metadata)
         return stream_metadata
 
@@ -167,6 +173,7 @@ class ListUsers(Stream):
     name = "list_users"
     replication_method = "FULL_TABLE"
     key_properties = ["email", "listId"]
+    parent = "lists"
 
 
 class Campaigns(Stream):
@@ -189,7 +196,7 @@ class Templates(Stream):
     name = "templates"
     replication_method = "INCREMENTAL"
     replication_key = "updatedAt"
-    key_properties = [ "templateId" ]
+    key_properties = ["templateId"]
 
 
 class Metadata(Stream):

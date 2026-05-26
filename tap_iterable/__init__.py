@@ -43,6 +43,7 @@ def main():
 
     client = Iterable(**creds)
     Context.config = parsed_args.config
+    client.check_api_credentials()
 
     if parsed_args.discover:
         discover(client)
