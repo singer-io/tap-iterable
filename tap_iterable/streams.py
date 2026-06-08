@@ -3,6 +3,7 @@
 # Module dependencies.
 #
 
+import io
 import os
 import json
 import datetime
@@ -14,6 +15,7 @@ from singer import metadata
 from singer import utils
 from dateutil.parser import parse
 from tap_iterable.context import Context
+from tap_iterable.exceptions import IterableForbiddenError
 import tap_iterable.helper as helper
 
 
@@ -32,10 +34,44 @@ class Stream():
     stream = None
     key_properties = KEY_PROPERTIES
     session_bookmark = None
+    check_access_endpoint = None
 
 
     def __init__(self, client=None):
         self.client = client
+
+
+    def check_access(self) -> bool:
+        """
+        Verify that the API credentials have read access to this stream.
+        Returns True if accessible, False if a 403 Forbidden error is raised.
+        Child streams always return True (access is governed by the parent check).
+        """
+        if getattr(self, 'parent', None):
+            return True
+
+        try:
+            data_type_name = getattr(self, 'data_type_name', None)
+            if data_type_name:
+                # Data export stream: probe the export endpoint with a minimal date range
+                now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+                response = self.client._get(
+                    "export/data.json",
+                    dataTypeName=data_type_name,
+                    startDateTime=yesterday,
+                    endDateTime=now,
+                )
+                response.close()
+            elif self.check_access_endpoint:
+                self.client.get(self.check_access_endpoint)
+            return True
+        except IterableForbiddenError:
+            LOGGER.warning(
+                "Stream '%s' does not have read permission, excluding from catalog.",
+                self.name,
+            )
+            return False
 
 
     def is_session_bookmark_old(self, value):
@@ -91,12 +127,12 @@ class Stream():
         stream_metadata = metadata.to_map(stream_metadata)
         if self.replication_key is not None:
             stream_metadata = metadata.write(stream_metadata, ("properties", self.replication_key), "inclusion", "automatic")
-        
+
         # Check if the stream has any parent attribute
         parent_attribute = getattr(self, "parent", None)
         if parent_attribute:
             stream_metadata = metadata.write(stream_metadata, (), "parent-tap-stream-id", parent_attribute)
-        
+
         stream_metadata = metadata.to_list(stream_metadata)
         return stream_metadata
 
@@ -137,11 +173,12 @@ class Stream():
                         tf.write(b'\n')
                 # Fix for TDL-22208
                 # The expected records were getting added to temp file but observing empty file while reading
-                # Hence, added below line to move file pointer to the beginning of a file 
+                # Hence, added below line to move file pointer to the beginning of a file
                 tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
-                with open(tf.name, 'r', encoding='utf-8') as tf_reader:
+                tf_reader = io.TextIOWrapper(tf, encoding='utf-8')
+                try:
                     for line in tf_reader:
                         # json load line with line feed removed, but
                         # sometimes the last line does not end with a line
@@ -156,10 +193,12 @@ class Stream():
                             pass
                         self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
                         yield (self.stream, rec)
-                LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
+                    LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
+                finally:
+                    tf_reader.detach()  # detach so NamedTemporaryFile can still close the underlying handle
 
             if not self.session_bookmark and bookmark :
-                self.session_bookmark = bookmark 
+                self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
 
@@ -167,6 +206,7 @@ class Stream():
 class Lists(Stream):
     name = "lists"
     replication_method = "FULL_TABLE"
+    check_access_endpoint = "lists"
 
 
 class ListUsers(Stream):
@@ -180,16 +220,19 @@ class Campaigns(Stream):
     name = "campaigns"
     replication_method = "INCREMENTAL"
     replication_key = "updatedAt"
+    check_access_endpoint = "campaigns"
 
 
 class Channels(Stream):
     name = "channels"
     replication_method = "FULL_TABLE"
+    check_access_endpoint = "channels"
 
 
 class MessageTypes(Stream):
     name = "message_types"
     replication_method = "FULL_TABLE"
+    check_access_endpoint = "messageTypes"
 
 
 class Templates(Stream):
@@ -197,12 +240,14 @@ class Templates(Stream):
     replication_method = "INCREMENTAL"
     replication_key = "updatedAt"
     key_properties = ["templateId"]
+    check_access_endpoint = "templates"
 
 
 class Metadata(Stream):
     name = "metadata"
     replication_method = "FULL_TABLE"
     key_properties = [ "key" ]
+    check_access_endpoint = "metadata"
 
 
 class EmailBounce(Stream):

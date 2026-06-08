@@ -24,6 +24,10 @@ class IterableUnauthorizedError(IterableError):
     pass
 
 
+class IterableForbiddenError(IterableError):
+    pass
+
+
 class IterableNotAvailableError(IterableServer5xxError):
     pass
 
@@ -36,6 +40,10 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     401: {
         "raise_exception": IterableUnauthorizedError,
         "message": "Invalid authorization credentials."
+    },
+    403: {
+        "raise_exception": IterableForbiddenError,
+        "message": "The account credentials supplied do not have 'read' access to the requested resource."
     },
     429: {
         "raise_exception": IterableRateLimitError,
