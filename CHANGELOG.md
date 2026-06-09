@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.1.0
-  * Streams the credentials cannot access are excluded from the catalog during discovery. [#34](https://github.com/singer-io/tap-iterable/pull/34)
+  * Streams that the credentials cannot access are excluded from the catalog during discovery. [#34](https://github.com/singer-io/tap-iterable/pull/34)
   * Added unit tests for discovery access-check logic
 
 ## 2.0.0

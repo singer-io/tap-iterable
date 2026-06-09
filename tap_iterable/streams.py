@@ -64,7 +64,8 @@ class Stream():
                 )
                 response.close()
             elif self.check_access_endpoint:
-                self.client.get(self.check_access_endpoint)
+                response = self.client._get(self.check_access_endpoint, stream=True)
+                response.close()
             return True
         except IterableForbiddenError:
             LOGGER.warning(
@@ -196,7 +197,7 @@ class Stream():
                     LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
                 finally:
                     tf_reader.detach()  # detach so NamedTemporaryFile can still close the underlying handle
-
+                    tf_reader.close()
             if not self.session_bookmark and bookmark :
                 self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)

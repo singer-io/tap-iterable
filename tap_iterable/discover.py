@@ -32,8 +32,11 @@ def _apply_access_checks(client, accessible_streams: list) -> None:
     _prune_inaccessible_children(accessible_streams)
 
     if inaccessible_streams:
-        total_parent_streams = [name for name, cls in STREAMS.items() if not getattr(cls, 'parent', None)]
-        if len(inaccessible_streams) == len(total_parent_streams):
+        remaining_parents = [
+            name for name in accessible_streams
+            if not getattr(STREAMS[name], 'parent', None)
+        ]
+        if not remaining_parents:
             raise IterableForbiddenError(
                 "HTTP-error-code: 403, Error: The account credentials supplied do not have 'read' access to any "
                 "of the streams supported by the tap. Data collection cannot be initiated due to lack of permissions."

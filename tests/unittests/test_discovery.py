@@ -1,13 +1,54 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import requests
+
 from tap_iterable.discover import (
     _apply_access_checks,
     _prune_inaccessible_children,
     discover_streams,
 )
-from tap_iterable.exceptions import IterableForbiddenError
+from tap_iterable.exceptions import (
+    IterableForbiddenError,
+    raise_for_error,
+)
 from tap_iterable.streams import STREAMS
+
+
+class MockResponse:
+    """Minimal requests.Response stand-in for raise_for_error tests."""
+
+    def __init__(self, status_code, json_body=None):
+        self.status_code = status_code
+        self._json = json_body or {}
+
+    def raise_for_status(self):
+        raise requests.HTTPError("mock error")
+
+    def json(self):
+        return self._json
+
+
+class TestRaiseForError403(unittest.TestCase):
+    """Verify that a 403 response raises IterableForbiddenError (not retried by backoff)."""
+
+    def test_403_raises_iterable_forbidden_error(self):
+        response = MockResponse(403)
+        with self.assertRaises(IterableForbiddenError) as ctx:
+            raise_for_error(response)
+        self.assertIn("403", str(ctx.exception))
+
+    def test_403_uses_default_message_when_body_has_no_message(self):
+        response = MockResponse(403, json_body={})
+        with self.assertRaises(IterableForbiddenError) as ctx:
+            raise_for_error(response)
+        self.assertIn("read", str(ctx.exception))
+
+    def test_403_uses_api_message_when_present(self):
+        response = MockResponse(403, json_body={"message": "Forbidden by policy"})
+        with self.assertRaises(IterableForbiddenError) as ctx:
+            raise_for_error(response)
+        self.assertIn("Forbidden by policy", str(ctx.exception))
 
 
 class TestCheckAccess(unittest.TestCase):
@@ -26,16 +67,19 @@ class TestCheckAccess(unittest.TestCase):
         """REST streams return True when the API call succeeds."""
         from tap_iterable.streams import Channels
         client = self._make_client()
+        mock_response = MagicMock()
+        client._get.return_value = mock_response
         stream = Channels(client=client)
         result = stream.check_access()
-        client.get.assert_called_once_with("channels")
+        client._get.assert_called_once_with("channels", stream=True)
+        mock_response.close.assert_called_once()
         self.assertTrue(result)
 
     def test_check_access_returns_false_on_forbidden_rest(self):
         """REST streams return False when the API call raises IterableForbiddenError."""
         from tap_iterable.streams import Channels
         client = self._make_client()
-        client.get.side_effect = IterableForbiddenError("403 Forbidden")
+        client._get.side_effect = IterableForbiddenError("403 Forbidden")
         stream = Channels(client=client)
         result = stream.check_access()
         self.assertFalse(result)
