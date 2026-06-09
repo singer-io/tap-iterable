@@ -3,7 +3,6 @@
 # Module dependencies.
 #
 
-import io
 import os
 import json
 import datetime
@@ -178,26 +177,24 @@ class Stream():
                 tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
-                tf_reader = io.TextIOWrapper(tf, encoding='utf-8')
-                try:
-                    for line in tf_reader:
-                        # json load line with line feed removed, but
-                        # sometimes the last line does not end with a line
-                        # feed, so check
-                        if line[-1] == '\n':
-                            rec = json.loads(line[:-1])
-                        else:
-                            rec = json.loads(line)
-                        try:
-                            rec["transactionalData"] = json.loads(rec["transactionalData"])
-                        except KeyError:
-                            pass
-                        self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
-                        yield (self.stream, rec)
-                    LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
-                finally:
-                    tf_reader.detach()  # detach so NamedTemporaryFile can still close the underlying handle
-                    tf_reader.close()
+                for raw_line in tf:
+                    line = raw_line.decode('utf-8')
+                    # json load line with line feed removed, but
+                    # sometimes the last line does not end with a line
+                    # feed, so check
+                    if line[-1] == '\n':
+                        rec = json.loads(line[:-1])
+                    else:
+                        rec = json.loads(line)
+                    try:
+                        rec["transactionalData"] = json.loads(rec["transactionalData"])
+                    except KeyError:
+                        # transactionalData is optional and only present on some email_send records;
+                        # skip the JSON deserialisation if the field is absent.
+                        pass
+                    self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
+                    yield (self.stream, rec)
+                LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
             if not self.session_bookmark and bookmark :
                 self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)
