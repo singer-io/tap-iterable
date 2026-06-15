@@ -60,7 +60,9 @@ class Iterable(object):
       params[key] = value
     uri += "?{params}".format(params=urlencode(params))
     LOGGER.info("GET request to {uri}".format(uri=uri))
+
     response = requests.get(uri, stream=stream, headers=headers, params=params)
+    LOGGER.info("Response status:%s", response.status_code)
 
     raise_for_error(response)
 

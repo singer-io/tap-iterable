@@ -52,13 +52,14 @@ class Stream():
         try:
             data_type_name = getattr(self, 'data_type_name', None)
             if data_type_name:
-                # Data export stream: probe the export endpoint with a minimal date range
-                now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+                # Probe with a 1-hour window — just enough to verify access
+                now = datetime.datetime.now()
+                one_hour_ago = (now - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+                now = now.strftime("%Y-%m-%d %H:%M:%S")
                 response = self.client._get(
                     "export/data.json",
                     dataTypeName=data_type_name,
-                    startDateTime=yesterday,
+                    startDateTime=one_hour_ago,
                     endDateTime=now,
                 )
                 response.close()
@@ -66,10 +67,11 @@ class Stream():
                 response = self.client._get(self.check_access_endpoint, stream=True)
                 response.close()
             return True
-        except IterableForbiddenError:
+        except IterableForbiddenError as exc:
             LOGGER.warning(
-                "Stream '%s' does not have read permission, excluding from catalog.",
+                "Permission Error: Stream '%s' %s. Excluding from catalog.",
                 self.name,
+                exc,
             )
             return False
 

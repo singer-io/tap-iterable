@@ -31,19 +31,14 @@ def _apply_access_checks(client, accessible_streams: list) -> None:
 
     _prune_inaccessible_children(accessible_streams)
 
-    if inaccessible_streams:
-        remaining_parents = [
-            name for name in accessible_streams
-            if not getattr(STREAMS[name], 'parent', None)
-        ]
-        if not remaining_parents:
-            raise IterableForbiddenError(
-                "HTTP-error-code: 403, Error: The account credentials supplied do not have 'read' access to any "
-                "of the streams supported by the tap. Data collection cannot be initiated due to lack of permissions."
-            )
+    if not accessible_streams:
+        raise IterableForbiddenError(
+            "HTTP-error-code: 403, Error: The credentials do not have \
+                'read' access to any supported streams."
+        )
+    elif inaccessible_streams:
         LOGGER.warning(
-            "The account credentials supplied do not have 'read' access to the following stream(s): %s. "
-            "These streams have been excluded from the catalog.",
+            "No 'read' access to stream(s): %s. Excluded from catalog.",
             ", ".join(inaccessible_streams),
         )
 
@@ -57,7 +52,8 @@ def _prune_inaccessible_children(accessible_streams: list) -> None:
         parent = getattr(stream_cls, 'parent', None)
         if name in accessible_streams and parent and parent not in accessible_streams:
             LOGGER.warning(
-                "Stream '%s' excluded from catalog because its parent stream '%s' is not accessible.",
+                "Stream '%s' excluded from catalog because its parent \
+                    stream '%s' is not accessible.",
                 name, parent,
             )
             accessible_streams.remove(name)
