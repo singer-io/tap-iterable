@@ -52,14 +52,14 @@ class Stream():
         try:
             data_type_name = getattr(self, 'data_type_name', None)
             if data_type_name:
-                # Probe with a 1-hour window — just enough to verify access
+                # Probe with a 1-minute window — just enough to verify access
                 now = datetime.datetime.now()
-                one_hour_ago = (now - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+                one_minute_ago = (now - datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")
                 response = self.client._get(
                     "export/data.json",
                     dataTypeName=data_type_name,
-                    startDateTime=one_hour_ago,
+                    startDateTime=one_minute_ago,
                     endDateTime=now,
                 )
                 response.close()
@@ -69,9 +69,9 @@ class Stream():
             return True
         except IterableForbiddenError as exc:
             LOGGER.warning(
-                "Permission Error: Stream '%s' %s. Excluding from catalog.",
+                "Unauthorized Stream: %s, excluding from catalog. HTTP-Error-Message: '%s'",
                 self.name,
-                exc,
+                str(exc),
             )
             return False
 
@@ -179,24 +179,23 @@ class Stream():
                 tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
-                for raw_line in tf:
-                    line = raw_line.decode('utf-8')
-                    # json load line with line feed removed, but
-                    # sometimes the last line does not end with a line
-                    # feed, so check
-                    if line[-1] == '\n':
-                        rec = json.loads(line[:-1])
-                    else:
-                        rec = json.loads(line)
-                    try:
-                        rec["transactionalData"] = json.loads(rec["transactionalData"])
-                    except KeyError:
-                        # transactionalData is optional and only present on some email_send records;
-                        # skip the JSON deserialisation if the field is absent.
-                        pass
-                    self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
-                    yield (self.stream, rec)
+                with open(tf.name, 'r', encoding='utf-8') as tf_reader:
+                    for line in tf_reader:
+                        # json load line with line feed removed, but
+                        # sometimes the last line does not end with a line
+                        # feed, so check
+                        if line[-1] == '\n':
+                            rec = json.loads(line[:-1])
+                        else:
+                            rec = json.loads(line)
+                        try:
+                            rec["transactionalData"] = json.loads(rec["transactionalData"])
+                        except KeyError:
+                            pass
+                        self.update_session_bookmark(rec.get(self.replication_key, request_end_date))
+                        yield (self.stream, rec)
                 LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
+
             if not self.session_bookmark and bookmark :
                 self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)

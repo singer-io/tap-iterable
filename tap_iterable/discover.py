@@ -33,8 +33,8 @@ def _apply_access_checks(client, accessible_streams: list) -> None:
 
     if not accessible_streams:
         raise IterableForbiddenError(
-            "HTTP-error-code: 403, Error: The credentials do not have \
-                'read' access to any supported streams."
+            "HTTP-error-code: 403, Error: The credentials do not have " \
+            "'read' access to any supported streams."
         )
     elif inaccessible_streams:
         LOGGER.warning(
@@ -52,8 +52,8 @@ def _prune_inaccessible_children(accessible_streams: list) -> None:
         parent = getattr(stream_cls, 'parent', None)
         if name in accessible_streams and parent and parent not in accessible_streams:
             LOGGER.warning(
-                "Stream '%s' excluded from catalog because its parent \
-                    stream '%s' is not accessible.",
+                "Stream '%s' excluded from catalog because its parent "
+                "stream '%s' is not accessible.",
                 name, parent,
             )
             accessible_streams.remove(name)
