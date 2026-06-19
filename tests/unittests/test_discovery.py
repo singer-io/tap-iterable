@@ -216,6 +216,28 @@ class TestApplyAccessChecks(unittest.TestCase):
 
         self.assertNotIn(first_parent, accessible)
 
+    def test_all_inaccessible_error_message(self):
+        client = MagicMock()
+        accessible = list(STREAMS.keys())
+        with patch('tap_iterable.streams.Stream.check_access', return_value=False):
+            with self.assertRaises(IterableForbiddenError) as ctx:
+                _apply_access_checks(client, accessible)
+        self.assertIn('403', str(ctx.exception))
+        self.assertIn("do not have 'read' access to any supported streams", str(ctx.exception))
+
+    def test_all_inaccessible_exact_error_message(self):
+        """Validate the exact error message raised when no streams are accessible."""
+        client = MagicMock()
+        accessible = list(STREAMS.keys())
+        expected_message = (
+            "HTTP-error-code: 403, Error: The credentials "
+            "do not have 'read' access to any supported streams."
+        )
+        with patch('tap_iterable.streams.Stream.check_access', return_value=False):
+            with self.assertRaises(IterableForbiddenError) as ctx:
+                _apply_access_checks(client, accessible)
+        self.assertEqual(expected_message, str(ctx.exception))
+
 
 class TestDiscoverStreams(unittest.TestCase):
     """Integration-style unit tests for discover_streams()."""
