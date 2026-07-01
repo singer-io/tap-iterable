@@ -14,6 +14,7 @@ from singer import metadata
 from singer import utils
 from dateutil.parser import parse
 from tap_iterable.context import Context
+from tap_iterable.exceptions import IterableForbiddenError
 import tap_iterable.helper as helper
 
 
@@ -32,10 +33,47 @@ class Stream():
     stream = None
     key_properties = KEY_PROPERTIES
     session_bookmark = None
+    check_access_endpoint = None
 
 
     def __init__(self, client=None):
         self.client = client
+
+
+    def check_access(self) -> bool:
+        """
+        Verify that the API credentials have read access to this stream.
+        Returns True if accessible, False if a 403 Forbidden error is raised.
+        Child streams always return True (access is governed by the parent check).
+        """
+        if getattr(self, 'parent', None):
+            return True
+
+        try:
+            data_type_name = getattr(self, 'data_type_name', None)
+            if data_type_name:
+                # Probe with a 1-minute window — just enough to verify access
+                now = datetime.datetime.now()
+                one_minute_ago = (now - datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
+                now = now.strftime("%Y-%m-%d %H:%M:%S")
+                response = self.client._get(
+                    "export/data.json",
+                    dataTypeName=data_type_name,
+                    startDateTime=one_minute_ago,
+                    endDateTime=now,
+                )
+                response.close()
+            elif self.check_access_endpoint:
+                response = self.client._get(self.check_access_endpoint, stream=True)
+                response.close()
+            return True
+        except IterableForbiddenError as exc:
+            LOGGER.warning(
+                "Unauthorized Stream: %s, excluding from catalog. HTTP-Error-Message: '%s'",
+                self.name,
+                str(exc),
+            )
+            return False
 
 
     def is_session_bookmark_old(self, value):
@@ -91,12 +129,12 @@ class Stream():
         stream_metadata = metadata.to_map(stream_metadata)
         if self.replication_key is not None:
             stream_metadata = metadata.write(stream_metadata, ("properties", self.replication_key), "inclusion", "automatic")
-        
+
         # Check if the stream has any parent attribute
         parent_attribute = getattr(self, "parent", None)
         if parent_attribute:
             stream_metadata = metadata.write(stream_metadata, (), "parent-tap-stream-id", parent_attribute)
-        
+
         stream_metadata = metadata.to_list(stream_metadata)
         return stream_metadata
 
@@ -137,7 +175,7 @@ class Stream():
                         tf.write(b'\n')
                 # Fix for TDL-22208
                 # The expected records were getting added to temp file but observing empty file while reading
-                # Hence, added below line to move file pointer to the beginning of a file 
+                # Hence, added below line to move file pointer to the beginning of a file
                 tf.seek(0)
                 write_time = time.time()
                 LOGGER.info('wrote {} records to temp file in {} seconds'.format(count, int(write_time - start_time)))
@@ -159,7 +197,7 @@ class Stream():
                 LOGGER.info('Read and emitted {} records from temp file in {} seconds'.format(count, int(time.time() - write_time)))
 
             if not self.session_bookmark and bookmark :
-                self.session_bookmark = bookmark 
+                self.session_bookmark = bookmark
             self.update_bookmark(state, self.session_bookmark)
             singer.write_state(state)
 
@@ -167,6 +205,7 @@ class Stream():
 class Lists(Stream):
     name = "lists"
     replication_method = "FULL_TABLE"
+    check_access_endpoint = "lists"
 
 
 class ListUsers(Stream):
@@ -180,16 +219,19 @@ class Campaigns(Stream):
     name = "campaigns"
     replication_method = "INCREMENTAL"
     replication_key = "updatedAt"
+    check_access_endpoint = "campaigns"
 
 
 class Channels(Stream):
     name = "channels"
     replication_method = "FULL_TABLE"
+    check_access_endpoint = "channels"
 
 
 class MessageTypes(Stream):
     name = "message_types"
     replication_method = "FULL_TABLE"
+    check_access_endpoint = "messageTypes"
 
 
 class Templates(Stream):
@@ -197,12 +239,14 @@ class Templates(Stream):
     replication_method = "INCREMENTAL"
     replication_key = "updatedAt"
     key_properties = ["templateId"]
+    check_access_endpoint = "templates"
 
 
 class Metadata(Stream):
     name = "metadata"
     replication_method = "FULL_TABLE"
     key_properties = [ "key" ]
+    check_access_endpoint = "metadata"
 
 
 class EmailBounce(Stream):
